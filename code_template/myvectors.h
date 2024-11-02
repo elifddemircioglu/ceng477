@@ -2,6 +2,19 @@
 #define __myvectors__
 
 #include <vector>
+#include <cmath>
+
+
+
+    struct Vec3i
+    {
+        int x, y, z;
+    };
+
+    struct Vec4f
+    {
+        float x, y, z, w;
+    };
 
     struct Vec3f
     {
@@ -29,6 +42,7 @@
         Vec3f operator-(const Vec3f rhs) const {
             return Vec3f(x - rhs.x, y - rhs.y, z - rhs.z);
         }
+
 
         // Dot product.
         float operator*(const Vec3f rhs) const {
@@ -63,6 +77,10 @@
             return *this;
         }
 
+        Vec3f Negate() const {
+            return Vec3f(0 - x, 0 - y, 0 - z);
+        }
+
         Vec3f CrossProduct(const Vec3f rhs) const {
             return Vec3f(y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z,
                         x * rhs.y - y * rhs.x);
@@ -83,20 +101,11 @@
 
         Vec3f calculateDirection(Vec3f toVector) 
         {
-        Vec3f directionVector = toVector - *this;
-        return directionVector.Normalize();
+            Vec3f directionVector = toVector - *this;
+            return directionVector.Normalize();
         }
     };
 
-    struct Vec3i
-    {
-        int x, y, z;
-    };
-
-    struct Vec4f
-    {
-        float x, y, z, w;
-    };
 
 
 

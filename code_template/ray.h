@@ -1,5 +1,5 @@
-#ifndef __RAY-H__
-#define __RAY-H__
+#ifndef __RAY_H__
+#define __RAY_H__
 
 #include "myvectors.h"
 
@@ -10,7 +10,7 @@ struct Ray
 
     Ray() {}
     Ray(Vec3f origin, Vec3f direction)
-    {
+    {   
         this->origin = origin;
         this->direction = direction;
     }
