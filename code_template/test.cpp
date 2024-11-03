@@ -1,89 +1,81 @@
-#include "intersections.h"
-#include "myvectors.h"
-#include "ray.h"
-#include <iostream>
+// #include <iostream>
+// #include <fstream>
+// #include <vector>
+// #include <cmath>
+// #include "intersections.h"
 
-void runTests() {
-    Vec3f a(0, 0, 0);
-    Vec3f b(1, 0, 0);
-    Vec3f c(0, 1, 0);
+// const int WIDTH = 800;
+// const int HEIGHT = 600;
+// const float ASPECT_RATIO = float(WIDTH) / HEIGHT;
+// const float FOV = 90.0f; // Field of view
 
-    // Case 1: Ray intersects the triangle from the front
-    Ray ray1(Vec3f(0.25f, 0.25f, 1), Vec3f(0, 0, -1));
-    float t1;
-    bool hit1 = rayTriangleIntersect(a, b, c, ray1, t1);
-    std::cout << "Test Case 1: Intersection from front - " << (hit1 ? "Hit" : "Miss") << ", t = " << t1 << '\n';
+// struct Color {
+//     int r, g, b;
+//     Color(int r, int g, int b) : r(r), g(g), b(b) {}
+// };
 
-    // Case 2: Ray misses the triangle
-    Ray ray2(Vec3f(2, 2, 1), Vec3f(0, 0, -1));
-    float t2;
-    bool hit2 = rayTriangleIntersect(a, b, c, ray2, t2);
-    std::cout << "Test Case 2: Ray misses - " << (hit2 ? "Hit" : "Miss") << '\n';
+// // Simple function to write an image to a PPM file
+// void writePPM(const std::string& filename, const std::vector<Color>& framebuffer) {
+//     std::ofstream ofs(filename, std::ios::out | std::ios::binary);
+//     ofs << "P6\n" << WIDTH << " " << HEIGHT << "\n255\n";
+//     for (const auto& color : framebuffer) {
+//         ofs << (unsigned char)(std::min(255, color.r)) 
+//             << (unsigned char)(std::min(255, color.g)) 
+//             << (unsigned char)(std::min(255, color.b));
+//     }
+//     ofs.close();
+// }
 
-    // Case 3: Ray intersects triangle's plane but outside triangle boundary
-    Ray ray3(Vec3f(1, 1, 1), Vec3f(0, 0, -1));
-    float t3;
-    bool hit3 = rayTriangleIntersect(a, b, c, ray3, t3);
-    std::cout << "Test Case 3: Intersection outside triangle - " << (hit3 ? "Hit" : "Miss") << '\n';
+// int main() {
+//     std::vector<Color> framebuffer(WIDTH * HEIGHT, Color(0, 0, 0));
 
-    // Case 4: Ray parallel to the triangle's plane
-    Ray ray4(Vec3f(0, 0, 1), Vec3f(1, 1, 0));
-    float t4;
-    bool hit4 = rayTriangleIntersect(a, b, c, ray4, t4);
-    std::cout << "Test Case 4: Ray parallel to plane - " << (hit4 ? "Hit" : "Miss") << '\n';
+//     // Define a triangle
+//     Vec3f a(-0.5f, 0.5f, -2.0f);
+//     Vec3f b(-0.5f, -0.5f, -2.0f);
+//     Vec3f c(0.5f, -0.5f, -2.0f);
+//     Vec3f d(0.5f, 0.5f, -2.0f);
+//     Vec3f e(0.75f, 0.75f, -2.0f);
+//     Vec3f f(1.0f, 0.75f, -2.0f);
+//     Vec3f g(0.875f, 1.0f, -2.0f);
+//     Vec3f h(-0.875f, 1.0f, -2.0f);
 
-    // Case 5: Ray intersects exactly on edge `ab`
-    Ray ray5(Vec3f(0.5f, -0.1f, 1), Vec3f(0, 0, -1));
-    float t5;
-    bool hit5 = rayTriangleIntersect(a, b, c, ray5, t5);
-    std::cout << "Test Case 5: Intersection on edge ab - " << (hit5 ? "Hit" : "Miss") << ", t = " << t5 << '\n';
+//     // Define a sphere
+//     Vec3f sphere_center(0.0f, 0.0f, -6.0f);
+//     float sphere_radius = 1.0f;
 
-    // Case 6: Ray intersects exactly at vertex `a`
-    Ray ray6(Vec3f(0, 0, 1), Vec3f(0, 0, -1));
-    float t6;
-    bool hit6 = rayTriangleIntersect(a, b, c, ray6, t6);
-    std::cout << "Test Case 6: Intersection at vertex a - " << (hit6 ? "Hit" : "Miss") << ", t = " << t6 << '\n';
+//     // Loop through each pixel on the image plane
+//     for (int j = 0; j < HEIGHT; ++j) {
+//         for (int i = 0; i < WIDTH; ++i) {
+//             // Calculate normalized screen coordinates
+//             float x = (2 * (i + 0.5) / float(WIDTH) - 1) * ASPECT_RATIO * tan(FOV / 2 * M_PI / 180);
+//             float y = (1 - 2 * (j + 0.5) / float(HEIGHT)) * tan(FOV / 2 * M_PI / 180);
 
-    // New Cases
-    // Case 7: Ray originates inside the triangle
-    Ray ray7(Vec3f(0.25f, 0.25f, 0), Vec3f(0, 0, 1));
-    float t7;
-    bool hit7 = rayTriangleIntersect(a, b, c, ray7, t7);
-    std::cout << "Test Case 7: Ray originates inside the triangle - " << (hit7 ? "Hit" : "Miss") << ", t = " << t7 << '\n';
+//             // Define ray from camera origin (0, 0, 0) through the pixel
+//             Vec3f ray_origin(0, 0, 0);
+//             Vec3f ray_direction = Vec3f(x, y, -1).Normalize();
+//             Ray ray(ray_origin, ray_direction);
 
-    // Case 8: Ray intersects exactly on edge `bc`
-    Ray ray8(Vec3f(0.5f, 0.5f, 1), Vec3f(0, 0, -1));
-    float t8;
-    bool hit8 = rayTriangleIntersect(a, b, c, ray8, t8);
-    std::cout << "Test Case 8: Intersection on edge bc - " << (hit8 ? "Hit" : "Miss") << ", t = " << t8 << '\n';
+//             // Check for intersection with the triangle and sphere
+//             float t;
+//             bool hit_triangle = rayTriangleIntersect(c, a, b, ray, t);
+//             bool hit_triangle2 = rayTriangleIntersect(a, c, d, ray, t);
+//             //bool hit_triangle3 = rayTriangleIntersect(a, b, c, ray, t);
+//             bool hit_sphere = raySphereIntersect(sphere_center, sphere_radius, ray, t);
 
-    // Case 9: Ray just misses above the triangle
-    Ray ray9(Vec3f(0.5f, 0.5f, 1), Vec3f(0.5f, 0.5f, -1));
-    float t9;
-    bool hit9 = rayTriangleIntersect(a, b, c, ray9, t9);
-    std::cout << "Test Case 9: Ray misses just outside triangle - " << (hit9 ? "Hit" : "Miss") << '\n';
+//             // Basic shading based on hit
+//             if (hit_sphere) {
+//                 framebuffer[j * WIDTH + i] = Color(255, 0, 0); // Red for triangle
+//             } else if (hit_triangle || hit_triangle2) {
+//                 framebuffer[j * WIDTH + i] = Color(0, 255, 0); // Green for sphere
+//             } else {
+//                 framebuffer[j * WIDTH + i] = Color(30, 30, 30); // Background color
+//             }
+//         }
+//     }
 
-    // Case 10: Ray skims parallel to the triangle's plane
-    Ray ray10(Vec3f(0.5f, 0.5f, 0), Vec3f(1, -1, 0));
-    float t10;
-    bool hit10 = rayTriangleIntersect(a, b, c, ray10, t10);
-    std::cout << "Test Case 10: Ray parallel to plane - " << (hit10 ? "Hit" : "Miss") << '\n';
+//     // Output the framebuffer to a file
+//     writePPM("output.ppm", framebuffer);
+//     std::cout << "Image rendered to output.ppm" << std::endl;
 
-    // Case 11: Ray originates at vertex `b` and points toward vertex `c`
-    Ray ray11(b, c - b);
-    float t11;
-    bool hit11 = rayTriangleIntersect(a, b, c, ray11, t11);
-    std::cout << "Test Case 11: Ray originates at vertex b, points towards c - " << (hit11 ? "Hit" : "Miss") << ", t = " << t11 << '\n';
-
-    // Case 12: Ray intersects exactly on edge `ca`
-    Ray ray12(Vec3f(-0.1f, 0.5f, 1), Vec3f(0, 0, -1));
-    float t12;
-    bool hit12 = rayTriangleIntersect(a, b, c, ray12, t12);
-    std::cout << "Test Case 12: Intersection on edge ca - " << (hit12 ? "Hit" : "Miss") << ", t = " << t12 << '\n';
-
-}
-
-int main() {
-    runTests();
-    return 0;
-}
+//     return 0;
+// }

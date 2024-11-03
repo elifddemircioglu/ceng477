@@ -1,6 +1,6 @@
 #include "intersections.h"
 
-constexpr float kEpsilon = 1e-2;
+constexpr float kEpsilon = 1e-5;
 
 float mini(float a, float b)
 {
@@ -104,17 +104,62 @@ bool raySphereIntersect(const Vec3f &center, float radius, const Ray &ray, float
 
 
 // }
+// bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const Ray &ray, float &t) {
+//     Vec3f edge_ab = b - a;
+//     Vec3f edge_ac = c - a;
+    
+//     // Calculate the normal of the triangle plane
+//     Vec3f triangleNormal = edge_ab.CrossProduct(edge_ac);
+    
+//     // Calculate dot product of triangle normal and ray direction
+//     float triangleNormal_dot_raydir = triangleNormal * ray.direction;
+    
+//     // Check if ray is parallel to the triangle's plane
+//     if (std::fabs(triangleNormal_dot_raydir) < kEpsilon) 
+//         return false; // No intersection if parallel
+
+//     // Compute the plane offset `d`
+//     float d = -(triangleNormal * a); 
+
+//     // Calculate the intersection distance `t`
+//     t = -(triangleNormal * ray.origin + d) / triangleNormal_dot_raydir;
+
+//     // If `t` is negative, the triangle is behind the ray origin
+//     if (t < 0) 
+//         return false;
+
+//     // Compute intersection point on the plane
+//     Vec3f rayPoint = ray.pointIsAt(t);
+
+//     // Inside-Outside Test with relaxed precision for edge cases
+//     Vec3f edge_abp = rayPoint - a;
+//     if ((triangleNormal * edge_ab.CrossProduct(edge_abp)) < -kEpsilon)
+//         return false;
+
+//     Vec3f edge_bc = c - b;
+//     Vec3f edge_bcp = rayPoint - b;
+//     if ((triangleNormal * edge_bc.CrossProduct(edge_bcp)) < -kEpsilon)
+//         return false;
+
+//     Vec3f edge_ca = a - c;
+//     Vec3f edge_cap = rayPoint - c;
+//     if ((triangleNormal * edge_ca.CrossProduct(edge_cap)) < -kEpsilon)
+//         return false;
+
+//     // If all tests pass, we have a valid intersection inside or on the triangle boundary
+//     return true;
+// }
+
 bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const Ray &ray, float &t) {
     Vec3f edge_ab = b - a;
     Vec3f edge_ac = c - a;
     
-    // Calculate the normal of the triangle plane
-    Vec3f triangleNormal = edge_ab.CrossProduct(edge_ac);
-    
-    // Calculate dot product of triangle normal and ray direction
-    float triangleNormal_dot_raydir = triangleNormal * ray.direction;
-    
+    // Compute the triangle's normal
+    Vec3f triangleNormal = edge_ab.CrossProduct(edge_ac).Normalize();
+
     // Check if ray is parallel to the triangle's plane
+    float triangleNormal_dot_raydir = triangleNormal * ray.direction;
+
     if (std::fabs(triangleNormal_dot_raydir) < kEpsilon) 
         return false; // No intersection if parallel
 
@@ -131,21 +176,18 @@ bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const 
     // Compute intersection point on the plane
     Vec3f rayPoint = ray.pointIsAt(t);
 
-    // Inside-Outside Test with relaxed precision for edge cases
-    Vec3f edge_abp = rayPoint - a;
-    if ((triangleNormal * edge_ab.CrossProduct(edge_abp)) < -kEpsilon)
-        return false;
-
+    // Calculate vectors for barycentric coordinates
     Vec3f edge_bc = c - b;
-    Vec3f edge_bcp = rayPoint - b;
-    if ((triangleNormal * edge_bc.CrossProduct(edge_bcp)) < -kEpsilon)
-        return false;
-
     Vec3f edge_ca = a - c;
-    Vec3f edge_cap = rayPoint - c;
-    if ((triangleNormal * edge_ca.CrossProduct(edge_cap)) < -kEpsilon)
-        return false;
+    Vec3f edge_ap = rayPoint - a;
+    Vec3f edge_bp = rayPoint - b;
 
-    // If all tests pass, we have a valid intersection inside or on the triangle boundary
-    return true;
+    // Compute barycentric coordinates
+    float area_abc = triangleNormal * edge_ab.CrossProduct(edge_ac); // Full triangle area
+    float u = triangleNormal * edge_bc.CrossProduct(rayPoint - b) / area_abc; // PBC area / ABC area
+    float v = triangleNormal * edge_ca.CrossProduct(rayPoint - c) / area_abc; // PCA area / ABC area
+    float w = 1.0f - u - v; // Remaining coordinate
+
+    // If all barycentric coordinates are within [0, 1], the point is inside or on the triangle
+    return (u >= -kEpsilon) && (v >= -kEpsilon) && (w >= -kEpsilon);
 }

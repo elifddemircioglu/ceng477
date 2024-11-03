@@ -139,7 +139,7 @@ void parser::Scene::loadFromXml(const std::string &filepath)
         element = element->NextSiblingElement("Material");
     }
 
-    //Get VertexData
+    //Get VertexData it is indexed
     element = root->FirstChildElement("VertexData");
     stream << element->GetText() << std::endl;
     Vec3f vertex;
