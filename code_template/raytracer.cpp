@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
                 //             temp_obj = hit_record
                 // }
                 bool flag = false;
+                float t;
                 for(int i = 0; i < parser_scene.triangles.size() ; i++ ){
                     
                     parser::Face f;
@@ -94,7 +95,6 @@ int main(int argc, char* argv[])
                     Vec3f& a = parser_scene.vertex_data[index_a-1];
                     Vec3f& b = parser_scene.vertex_data[index_b-1];
                     Vec3f& c = parser_scene.vertex_data[index_c-1];
-                    float t;
                     if(rayTriangleIntersect(a,b,c,r,t)){
                         flag = true;
                         
@@ -111,21 +111,22 @@ int main(int argc, char* argv[])
                     float radius = f.radius;
                     //printf("a:%d,b:%d,c:%d\n",index_a,index_b,index_c);
                     Vec3f& center = parser_scene.vertex_data[center_vertex_id-1];
-                    float t;
+                    
                     if(raySphereIntersect(center,radius,r,t)){
                         flag = true;
                         
                         //image[row*width + column + 1] = 255;
                         //image[row*width + column + 2] = 255;
                     }     
-                }for(int i = 0; i < parser_scene.meshes.size() ; i++ ){
+                }
+                for(int i = 0; i < parser_scene.meshes.size() ; i++ ){
                     
                     parser::Mesh f;
                     f = parser_scene.meshes[i];
                     int material_id = f.material_id;
                     for(int boncuk = 0 ; boncuk < f.faces.size(); boncuk++)
                     {
-                        float t;
+
                         parser::Face tri;
                         tri = f.faces[boncuk];
                         int index_a = tri.v0_id;
@@ -146,6 +147,7 @@ int main(int argc, char* argv[])
                     image[k] = 255;
                     image[k+1] = 255;
                     image[k+2] = 255;
+                    printf("%f\n", t);
                 }
                 else
                     image[k] = 30;
