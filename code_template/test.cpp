@@ -5,7 +5,7 @@
 // #include "intersections.h"
 
 // const int WIDTH = 800;
-// const int HEIGHT = 600;
+// const int HEIGHT = 800;
 // const float ASPECT_RATIO = float(WIDTH) / HEIGHT;
 // const float FOV = 90.0f; // Field of view
 
@@ -30,15 +30,17 @@
 //     std::vector<Color> framebuffer(WIDTH * HEIGHT, Color(0, 0, 0));
 
 //     // Define a triangle
-//     Vec3f a(-0.5f, 0.5f, -2.0f);
-//     Vec3f b(-0.5f, -0.5f, -2.0f);
-//     Vec3f c(0.5f, -0.5f, -2.0f);
-//     Vec3f d(0.5f, 0.5f, -2.0f);
-//     Vec3f e(0.75f, 0.75f, -2.0f);
-//     Vec3f f(1.0f, 0.75f, -2.0f);
-//     Vec3f g(0.875f, 1.0f, -2.0f);
-//     Vec3f h(-0.875f, 1.0f, -2.0f);
-
+//     // -100 0  100
+//     //      100 0  100
+//     //      100 0 -100
+//     //     -100 0 -100 
+//     Vec3f a(-100.0f, 0.0f, 100.0f);
+//     Vec3f b(100.0f, 0.0f, -100.0f);
+//     Vec3f c(100.0f, 0.0f, -100.0f);
+//     Vec3f d(-100.0f, 0.0f, -100.0f);
+//     // Vec3f e(0.75f, 0.75f, -2.0f);
+//     // Vec3f f(1.0f, 0.75f, -2.0f);
+    
 //     // Define a sphere
 //     Vec3f sphere_center(0.0f, 0.0f, -6.0f);
 //     float sphere_radius = 1.0f;
@@ -57,16 +59,14 @@
 
 //             // Check for intersection with the triangle and sphere
 //             float t;
-//             bool hit_triangle = rayTriangleIntersect(c, a, b, ray, t);
-//             bool hit_triangle2 = rayTriangleIntersect(a, c, d, ray, t);
+//             //bool hit_triangle = rayTriangleIntersect(c, a, b, ray, t);
+//             //bool hit_triangle2 = rayTriangleIntersect(a, c, d, ray, t);
 //             //bool hit_triangle3 = rayTriangleIntersect(a, b, c, ray, t);
 //             bool hit_sphere = raySphereIntersect(sphere_center, sphere_radius, ray, t);
 
 //             // Basic shading based on hit
 //             if (hit_sphere) {
 //                 framebuffer[j * WIDTH + i] = Color(255, 0, 0); // Red for triangle
-//             } else if (hit_triangle || hit_triangle2) {
-//                 framebuffer[j * WIDTH + i] = Color(0, 255, 0); // Green for sphere
 //             } else {
 //                 framebuffer[j * WIDTH + i] = Color(30, 30, 30); // Background color
 //             }
@@ -74,7 +74,7 @@
 //     }
 
 //     // Output the framebuffer to a file
-//     writePPM("output.ppm", framebuffer);
+//     writePPM("output1.ppm", framebuffer);
 //     std::cout << "Image rendered to output.ppm" << std::endl;
 
 //     return 0;

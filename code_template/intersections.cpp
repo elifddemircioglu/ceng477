@@ -18,12 +18,15 @@ bool raySphereIntersect(const Vec3f &center, float radius, const Ray &ray, float
     // p = o + dt
     // (p-c)^2 - R^2
     // ((o + dt) - c)^2 - R^2 
-    // (o^2 + 2.dt.o + dt^2) - 2((o+dt).c) + c^2 - R^2  
-    //  o^2 + 2.dt.o + dt^2 - 2.o.c - 2.dt.c + c^2 - R^2 
-    //  dt^2 + 2.dt.(o - c) + o^2 - 2.o.c + c^2 - R^2 
 
+    // (o^2 + 2.dt.o + (dt)^2) - 2((o+dt).c) + c^2 - R^2  
+    //  o^2 + 2.dt.o + (dt)^2 - 2.o.c - 2.dt.c + c^2 - R^2 
+    //  (dt)^2 + 2.dt.(o - c) + o^2 - 2.o.c + c^2 - R^2 
+    // 
+    //  Ax^2 + Bx + C  = f(x)
+    // At^2 + Bt + C = f(t)
 
-    float a = ray.direction * ray.direction; // dt^2 (dt . dt) , dot product
+    float a = ray.direction * ray.direction; // (dt)^2 (dt . dt) , dot product
     // edd float b = - 2 * (ray.direction * (ray.origin - center));
     float b = 2 * (ray.direction * (ray.origin - center)); // 2.dt.(o - c)
     float c = (ray.origin - center) * (ray.origin - center) - radius * radius;
@@ -58,7 +61,7 @@ bool raySphereIntersect(const Vec3f &center, float radius, const Ray &ray, float
 }
 
 
-
+// //more simple approach
 // bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const Ray &ray, float &t){
 //     // 𝒏=(𝒄 −𝒃)  x (𝐚 −𝐛)
 //     // 𝑓(𝒑)=(𝒑−𝒂).𝒏=0
@@ -66,90 +69,55 @@ bool raySphereIntersect(const Vec3f &center, float radius, const Ray &ray, float
 //     // ab
 //     // bc
 //     // ca
-//     Vec3f edge_ab = b - a;
-//     Vec3f edge_bc = c - b;
-//     Vec3f edge_ac = c - a ;
+//     Vec3f edge_ab = b - a; //v0v1
+//     Vec3f edge_ac = c - a; //v0v2
+
 //     Vec3f triangleNormal = edge_ab.CrossProduct(edge_ac);
+    
 //     float triangleNormal_dot_raydir = triangleNormal * ray.direction;
 
-//     if (triangleNormal_dot_raydir < kEpsilon)  // if det is smaller than 0 then it is back facing
+//     if (std::fabs(triangleNormal_dot_raydir)< kEpsilon)  // if det is smaller than 0 then it is back facing
 //         return false;
 
-//     if(fabs(triangleNormal_dot_raydir) < kEpsilon ) // if 
-//         return false;
+//     float d = -(triangleNormal * a);
 
-//     float d = edge_ab.Negate() * triangleNormal;
-
-//     t = -(triangleNormal * ray.origin + d) / triangleNormal_dot_raydir;
+//     t = -(triangleNormal * ray.origin + d); //   / triangleNormal_dot_raydir;
 
 //     if (t < 0) 
 //         return false;
 
 //     Vec3f rayPoint = ray.pointIsAt(t);
 
-//         //if 0, it is on the triangle plane, means it intersects with the
+//         //if 0, it is on the triaedge_abngle plane, means it intersects with the
 //         // TRIANGLE'S PLANE, not means it intersects with the triangle, additional check below.
-//     Vec3f edge_abp = rayPoint - edge_ab;
-//     Vec3f edge_bcp = rayPoint - edge_bc;
-//     Vec3f edge_ca = c - a;
-//     Vec3f edge_cap = rayPoint - edge_ca;
-//     if (triangleNormal*(edge_ab.CrossProduct(edge_abp)) > 0 &&
-//         triangleNormal*(edge_bc.CrossProduct(edge_bcp)) > 0 &&
-//         triangleNormal*(edge_ca.CrossProduct(edge_cap)) > 0 ){
-//             return true;
-//         }
-//     return false;
-//     /*Check for the direction of the plane and the normal.*/
-
-
-
-// }
-// bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const Ray &ray, float &t) {
-//     Vec3f edge_ab = b - a;
-//     Vec3f edge_ac = c - a;
     
-//     // Calculate the normal of the triangle plane
-//     Vec3f triangleNormal = edge_ab.CrossProduct(edge_ac);
+//     Vec3f Ne;
+//     Vec3f edge_ap = rayPoint - a; //v0p
+//     Ne = edge_ab.CrossProduct(edge_ap);
+//     if (triangleNormal*(Ne) < 0)
+//         return false;
+
+//     Vec3f edge_bc = c - b; // v2v1
+//     Vec3f edge_bp = rayPoint - b; //v1p
+//     Ne = edge_bc.CrossProduct(edge_bp);
+//     if (triangleNormal*(Ne) < 0)
+//         return false;
     
-//     // Calculate dot product of triangle normal and ray direction
-//     float triangleNormal_dot_raydir = triangleNormal * ray.direction;
-    
-//     // Check if ray is parallel to the triangle's plane
-//     if (std::fabs(triangleNormal_dot_raydir) < kEpsilon) 
-//         return false; // No intersection if parallel
-
-//     // Compute the plane offset `d`
-//     float d = -(triangleNormal * a); 
-
-//     // Calculate the intersection distance `t`
-//     t = -(triangleNormal * ray.origin + d) / triangleNormal_dot_raydir;
-
-//     // If `t` is negative, the triangle is behind the ray origin
-//     if (t < 0) 
+//     Vec3f edge_ca = a - c;        //v2v0
+//     Vec3f edge_cp = rayPoint - c; //v2p
+//     Ne = edge_ca.CrossProduct(edge_cp);
+//     if (triangleNormal*(Ne) < 0)
 //         return false;
-
-//     // Compute intersection point on the plane
-//     Vec3f rayPoint = ray.pointIsAt(t);
-
-//     // Inside-Outside Test with relaxed precision for edge cases
-//     Vec3f edge_abp = rayPoint - a;
-//     if ((triangleNormal * edge_ab.CrossProduct(edge_abp)) < -kEpsilon)
-//         return false;
-
-//     Vec3f edge_bc = c - b;
-//     Vec3f edge_bcp = rayPoint - b;
-//     if ((triangleNormal * edge_bc.CrossProduct(edge_bcp)) < -kEpsilon)
-//         return false;
-
-//     Vec3f edge_ca = a - c;
-//     Vec3f edge_cap = rayPoint - c;
-//     if ((triangleNormal * edge_ca.CrossProduct(edge_cap)) < -kEpsilon)
-//         return false;
-
-//     // If all tests pass, we have a valid intersection inside or on the triangle boundary
+        
 //     return true;
+//     /*Check for the direction of the plane and the normal.*/
 // }
 
+
+
+
+ //baricentric
+ 
 bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const Ray &ray, float &t) {
     Vec3f edge_ab = b - a;
     Vec3f edge_ac = c - a;
@@ -180,12 +148,14 @@ bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const 
     Vec3f edge_bc = c - b;
     Vec3f edge_ca = a - c;
     Vec3f edge_ap = rayPoint - a;
+    
     Vec3f edge_bp = rayPoint - b;
+    Vec3f edge_cp = rayPoint - c;
 
     // Compute barycentric coordinates
-    float area_abc = triangleNormal * edge_ab.CrossProduct(edge_ac); // Full triangle area
-    float u = triangleNormal * edge_bc.CrossProduct(rayPoint - b) / area_abc; // PBC area / ABC area
-    float v = triangleNormal * edge_ca.CrossProduct(rayPoint - c) / area_abc; // PCA area / ABC area
+    float area_abc = (triangleNormal * edge_ab.CrossProduct(edge_ac)); // Full triangle area
+    float u = triangleNormal * edge_bc.CrossProduct(edge_bp) / area_abc; // PBC area / ABC area
+    float v = triangleNormal * edge_ca.CrossProduct(edge_cp) / area_abc; // PCA area / ABC area
     float w = 1.0f - u - v; // Remaining coordinate
 
     // If all barycentric coordinates are within [0, 1], the point is inside or on the triangle
