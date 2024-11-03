@@ -19,6 +19,7 @@ namespace parser
         float near_distance;
         int image_width, image_height;
         std::string image_name;
+
     };
 
     struct PointLight

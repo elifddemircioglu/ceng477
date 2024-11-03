@@ -3,8 +3,8 @@
 #include "myvectors.h"
 #include "ray.h"
 
-class hit_record {
-  public:
+struct hit_record {
+
     Vec3f p;
     Vec3f normal;
     float t;

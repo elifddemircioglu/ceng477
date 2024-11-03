@@ -4,7 +4,10 @@
 #include "tinyxml2.h"
 #include "myvectors.h"
 #include "ray.h"
-typedef unsigned char RGB[3];
+#include "intersections.h"
+
+
+
 
 int main(int argc, char* argv[])
 {
@@ -25,6 +28,8 @@ int main(int argc, char* argv[])
     // buraya bi parse edilen scene ile alakali var olan objelerin bi hit table'i eklensin
     // ayni sekilde bence cameralari da bi kamera objesine cekelim
 
+
+
     for(int camno = 0; camno < parser_scene.cameras.size(); camno++) // for every camera we have to generate a pic.
     {
         // buraya bence bi camera modulu eklenip operasyonlar o kamera objesi uzerinden dondurulsun. 
@@ -35,6 +40,7 @@ int main(int argc, char* argv[])
         //resolution of the image
         int width = parser_scene.cameras[camno].image_width;
         int height = parser_scene.cameras[camno].image_height;
+        printf("width: %d heigth:%d\n",width,height);
 
         //this is the image data array for every rgb for every pixel on the image. basically pixel numer * 3.
         unsigned char* image = new unsigned char [width * height * 3];
@@ -42,7 +48,7 @@ int main(int argc, char* argv[])
 
         //for camera and image plane calculations (acoording to slide 02)
         Vec3f w_dir = parser_scene.cameras[camno].gaze * -1;
-        Vec3f u_dir = w_dir.CrossProduct(parser_scene.cameras[camno].up).Normalize();
+        Vec3f u_dir = parser_scene.cameras[camno].up.CrossProduct(w_dir).Normalize();
         Vec3f& v_dir = parser_scene.cameras[camno].up;
         Vec3f& e = parser_scene.cameras[camno].position;
 
@@ -54,10 +60,10 @@ int main(int argc, char* argv[])
 
         Vec3f center = e + parser_scene.cameras[camno].gaze * parser_scene.cameras[camno].near_distance;
         Vec3f lefttopcorner = center + v_dir * t + u_dir * l;
-        
-        for (int row = 0; row < height; ++row)
+        int k = 0;
+        for (int row = 0; row < height; row++)
         {
-            for (int column = 0; column < width; ++column)
+            for (int column = 0; column < width; column++)
             {
                 float dist_u = ((r-l)/width)*(column+0.5);
                 float dist_v = ((t-b)/height)*(row+0.5);
@@ -66,30 +72,93 @@ int main(int argc, char* argv[])
                 Vec3f direction = pixel - e;
                 Vec3f direction_normalized = direction.Normalize();
                 Ray r(e, direction_normalized); // bu şu an istediğimiz pixelden geçen ray eq. olmuş oluyor.
-                temp_t = max
-                temp_obj;
-                for(int size = 0; size < parser.scene.meshes.length() -1 ; size++ ){
-                    if intersectmesh(t) 
-                        if temp_t > t
-                            temp_t = t
-                            temp_obj = hit_record
-                }
-                for(int size = 0; size < parser.scene.triangle.length() -1 ; size++ ){
-                    if intersecttriangle(t)
-                        if temp_t > t
-                            temp_t = t 
-                            temp_obj = hit_record
-                    }
-                for(int size = 0; size < parser.scene.spheres.length() -1 ; size++ ){
-                    if intersectspheres(t)
-                        if temp_t > t
-                            temp_t = t 
-                            temp_obj = hit_record
-                }
-
                 
 
-    
+                // temp_t = max
+                // temp_obj;
+                // for(int size = 0; size < parser_scene.meshes.length() -1 ; size++ ){
+                //     if intersectmesh(t) 
+                //         if temp_t > t
+                //             temp_t = t
+                //             temp_obj = hit_record
+                // }
+                bool flag = false;
+                for(int i = 0; i < parser_scene.triangles.size() ; i++ ){
+                    
+                    parser::Face f;
+                    f = parser_scene.triangles[i].indices;
+                    int index_a = f.v0_id;
+                    int index_b = f.v1_id;
+                    int index_c = f.v2_id;
+                    //printf("a:%d,b:%d,c:%d\n",index_a,index_b,index_c);
+                    Vec3f& a = parser_scene.vertex_data[index_a-1];
+                    Vec3f& b = parser_scene.vertex_data[index_b-1];
+                    Vec3f& c = parser_scene.vertex_data[index_c-1];
+                    float t;
+                    if(rayTriangleIntersect(a,b,c,r,t)){
+                        flag = true;
+                        
+                        //image[row*width + column + 1] = 255;
+                        //image[row*width + column + 2] = 255;
+                    }     
+                }
+                for(int i = 0; i < parser_scene.spheres.size() ; i++ ){
+                    
+                    parser::Sphere f;
+                    f = parser_scene.spheres[i];
+                    int material_id = f.material_id;
+                    int center_vertex_id = f.center_vertex_id;
+                    float radius = f.radius;
+                    //printf("a:%d,b:%d,c:%d\n",index_a,index_b,index_c);
+                    Vec3f& center = parser_scene.vertex_data[center_vertex_id-1];
+                    float t;
+                    if(raySphereIntersect(center,radius,r,t)){
+                        flag = true;
+                        
+                        //image[row*width + column + 1] = 255;
+                        //image[row*width + column + 2] = 255;
+                    }     
+                }for(int i = 0; i < parser_scene.meshes.size() ; i++ ){
+                    
+                    parser::Mesh f;
+                    f = parser_scene.meshes[i];
+                    int material_id = f.material_id;
+                    for(int boncuk = 0 ; boncuk < f.faces.size(); boncuk++)
+                    {
+                        float t;
+                        parser::Face tri;
+                        tri = f.faces[boncuk];
+                        int index_a = tri.v0_id;
+                        int index_b = tri.v1_id;
+                        int index_c = tri.v2_id;
+                        //printf("a:%d,b:%d,c:%d\n",index_a,index_b,index_c);
+                        Vec3f& a = parser_scene.vertex_data[index_a-1];
+                        Vec3f& b = parser_scene.vertex_data[index_b-1];
+                        Vec3f& c = parser_scene.vertex_data[index_c-1];
+                        if(rayTriangleIntersect(a,b,c,r,t)){
+                            flag = true;
+                        }     
+                    }
+                }
+                
+                
+                if (flag){
+                    image[k] = 255;
+                    image[k+1] = 255;
+                    image[k+2] = 255;
+                }
+                else
+                    image[k] = 30;
+                    image[k+1] = 30;
+                    image[k+2] = 30;
+                k += 3;
+                // for(int size = 0; size < parser_scene.spheres.length() -1 ; size++ ){
+                //     if intersectspheres(t)
+                //         if temp_t > t
+                //             temp_t = t 
+                //             temp_obj = hit_record
+                // }
+
             }
         }
 
