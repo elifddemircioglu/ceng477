@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     for(int camno = 0; camno < parser_scene.cameras.size(); camno++) // for every camera we have to generate a pic.
     {
         // buraya bence bi camera modulu eklenip operasyonlar o kamera objesi uzerinden dondurulsun. 
-        // ray_color , render vb vb.
+        // ray_color , render vb vb
         
         const char* ppm_filename = parser_scene.cameras[camno].image_name.c_str(); // get the name for outfile.
 
@@ -66,7 +66,28 @@ int main(int argc, char* argv[])
                 Vec3f direction = pixel - e;
                 Vec3f direction_normalized = direction.Normalize();
                 Ray r(e, direction_normalized); // bu şu an istediğimiz pixelden geçen ray eq. olmuş oluyor.
+                temp_t = max
+                temp_obj;
+                for(int size = 0; size < parser.scene.meshes.length() -1 ; size++ ){
+                    if intersectmesh(t) 
+                        if temp_t > t
+                            temp_t = t
+                            temp_obj = hit_record
+                }
+                for(int size = 0; size < parser.scene.triangle.length() -1 ; size++ ){
+                    if intersecttriangle(t)
+                        if temp_t > t
+                            temp_t = t 
+                            temp_obj = hit_record
+                    }
+                for(int size = 0; size < parser.scene.spheres.length() -1 ; size++ ){
+                    if intersectspheres(t)
+                        if temp_t > t
+                            temp_t = t 
+                            temp_obj = hit_record
+                }
 
+                
 
     
             }
