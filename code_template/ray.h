@@ -1,5 +1,5 @@
-#ifndef __RAY-H__
-#define __RAY-H__
+#ifndef __RAY_H__
+#define __RAY_H__
 
 #include "myvectors.h"
 

@@ -4,6 +4,8 @@
 #include "tinyxml2.h"
 #include "myvectors.h"
 #include "ray.h"
+#include "intersections.h"
+
 typedef unsigned char RGB[3];
 
 int main(int argc, char* argv[])
@@ -44,7 +46,10 @@ int main(int argc, char* argv[])
 
         Vec3f center = e + scene.cameras[camno].gaze * scene.cameras[camno].near_distance;
         Vec3f lefttopcorner = center + v_dir * t + u_dir * l;
-        
+        int k = 0;
+
+
+
         for (int row = 0; row < height; ++row)
         {
             for (int column = 0; column < width; ++column)
@@ -57,9 +62,45 @@ int main(int argc, char* argv[])
                 Vec3f direction_normalized = direction.Normalize();
                 Ray r(e, direction_normalized); // bu şu an istediğimiz pixelden geçen ray eq. olmuş oluyor.
 
+                //for every object in the scene we have to check if the ray intersects with the object.
+                // triangle with barycentric coordinates ile yapmayı deneyelim 
+                // sanırım şey gibi olcak, if mesh obbjesi varsa triangleintersect, if sphere varsa sphereintersect gibi. 
+                //sonra da intersection pointlere shading yapıcaz. en son da color valuesini image a atayacağız.   
 
-    
+                bool flag1 = false;
+                bool flag2 = false;
+                bool flag3 = false;
+                float t1 = INFINITY;
+                float t2 = INFINITY;
+                float t3 = INFINITY;
+                float minT = INFINITY;
+
+            bool isAnyIntersection = anyIntersection(flag1, flag2, flag3, t1, t2, t3, minT, scene, r);
+                
+            if(!isAnyIntersection){
+                image[k] = scene.background_color.x;
+                image[k+1] = scene.background_color.y;
+                image[k+2] = scene.background_color.z;
             }
+            else{
+                for(int i = 0; i < scene.point_lights.size(); i++){
+                    Vec3f lightPosition = scene.point_lights[i].position;
+                    Vec3f lightIntensity = scene.point_lights[i].intensity;
+                    Vec3f intersection = r.pointIsAt(minT);
+                    if(isThereObjectInBetween(lightPosition, lightIntensity, intersection, scene)){
+                        image[k] = scene.background_color.x;
+                        image[k+1] = scene.background_color.y;
+                        image[k+2] = scene.background_color.z;
+                    }
+                    else{
+                        //shading calculations
+                    }
+
+                }
+            }
+
+            k += 3;
+
         }
 
        
@@ -119,4 +160,5 @@ int main(int argc, char* argv[])
 
     
 
+}
 }

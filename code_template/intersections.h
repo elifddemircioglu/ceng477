@@ -3,14 +3,24 @@
 
 #include "myvectors.h"
 #include "ray.h"
+#include "parser.h"
 
+float minOfThree(float a, float b, float c);
 
 float mini(float a, float b);
+
 float discriminant(float a, float b, float c);
-//bool rayTriangleIntersect(const Vec3f &v0, const Vec3f &v1, const Vec3f &v2, const Ray &ray, float &t, float &u, float &v);
+
 bool raySphereIntersect(const Vec3f &center, float radius, const Ray &ray, float &t);
 
+bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const Ray &ray, float &t);
 
+bool anyIntersection(bool &flag1, bool &flag2, bool &flag3, float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r);
 
+bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  intersection, parser::Scene scene);
+
+Ray sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter);
+
+Ray triangleNormal(Vec3f a, Vec3f b, Vec3f c);
 
 #endif

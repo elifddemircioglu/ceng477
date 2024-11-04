@@ -16,12 +16,6 @@
             this->z = z;
         }
 
-        Vec3f(const Vec3i rhs) {
-            this->x = rhs.x;
-            this->y = rhs.y;
-            this->z = rhs.z;
-        }
-
         Vec3f operator+(const Vec3f rhs) const {
             return Vec3f(x + rhs.x, y + rhs.y, z + rhs.z);
         }
