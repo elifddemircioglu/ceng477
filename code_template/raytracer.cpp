@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
         //for camera and image plane calculations (acoording to slide 02)
         Vec3f w_dir = scene.cameras[camno].gaze * -1;
-        Vec3f u_dir = w_dir.CrossProduct(scene.cameras[camno].up).Normalize();
+        Vec3f u_dir = scene.cameras[camno].up.CrossProduct(w_dir).Normalize();
         Vec3f& v_dir = scene.cameras[camno].up;
         Vec3f& e = scene.cameras[camno].position;
         float l = scene.cameras[camno].near_plane.x;
@@ -67,15 +67,14 @@ int main(int argc, char* argv[])
                 // sanırım şey gibi olcak, if mesh obbjesi varsa triangleintersect, if sphere varsa sphereintersect gibi. 
                 //sonra da intersection pointlere shading yapıcaz. en son da color valuesini image a atayacağız.   
 
-                bool flag1 = false;
-                bool flag2 = false;
-                bool flag3 = false;
+
                 float t1 = INFINITY;
                 float t2 = INFINITY;
                 float t3 = INFINITY;
                 float minT = INFINITY;
+                int index = 0;
 
-            bool isAnyIntersection = anyIntersection(flag1, flag2, flag3, t1, t2, t3, minT, scene, r);
+            bool isAnyIntersection = anyIntersection(t1, t2, t3, minT, scene, r, index);
                 
             if(!isAnyIntersection){
                 image[k] = scene.background_color.x;
@@ -83,6 +82,39 @@ int main(int argc, char* argv[])
                 image[k+2] = scene.background_color.z;
             }
             else{
+                        Vec3f color = Vec3f(255,0,0);
+
+                        //her point lightin renge sağladığı değerleri ayrı ayrı ekleyeceğiz.
+                        for(int i = 0; i< scene.point_lights.size();i++ ){
+
+                             //shading calculations
+
+                            Vec3f lightPosition = scene.point_lights[i].position;
+                            Vec3f lightIntensity = scene.point_lights[i].intensity;
+
+                            //eğer o point lighta göre gölgedeyse sadece ambient değeri alınacak.
+                            bool isInShade = isThereObjectInBetween(lightPosition, lightIntensity, r.pointIsAt(minT), scene);
+
+                            if(minT == t1){
+                                //bu demektir ki bi triangle ile intersect ettik en yakında.
+                                //triangle normal calculate
+                            }
+                            else if(minT == t2){
+                                //bu demektir ki bi sphere ile intersect ettik en yakında.
+                                //sphere normal calculate
+                                Ray sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1]);
+                                color = color + pointShade(r.pointIsAt(minT), sphereNormal1, r.direction, scene.materials[scene.spheres[index].material_id-1], scene, isInShade);
+                            }
+                            else if(minT == t3){
+                                //mesh normal calculate
+                            }
+                        } 
+                        image[k] = color.x;
+                        image[k+1] = color.y;
+                        image[k+2] = color.z;
+                    }
+
+            /*else{
                 for(int i = 0; i < scene.point_lights.size(); i++){
                     Vec3f lightPosition = scene.point_lights[i].position;
                     Vec3f lightIntensity = scene.point_lights[i].intensity;
@@ -93,11 +125,14 @@ int main(int argc, char* argv[])
                         image[k+2] = scene.background_color.z;
                     }
                     else{
+                        image[k] = 255;
+                        image[k+1] = 255;
+                        image[k+2] = 255;
                         //shading calculations
                     }
 
                 }
-            }
+            }*/
 
             k += 3;
 

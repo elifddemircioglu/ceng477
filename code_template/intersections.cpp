@@ -1,7 +1,7 @@
 #include "intersections.h"
 #include "parser.h"
 
-float kEpsilon = 1e-5;
+float kEpsilon = 1e-3;
 
 float mini(float a, float b)
 {
@@ -28,7 +28,7 @@ bool raySphereIntersect(const Vec3f &center, float radius, const Ray &ray, float
 
     //we will compute t for shading etc
     float D = discriminant(a, b, c);
-    if (D < 0)
+    if (std::fabs(D) < kEpsilon)
     {
         return false;
     }      
@@ -110,9 +110,19 @@ Ray triangleNormal(Vec3f a, Vec3f b, Vec3f c){
 }
 
 
-bool anyIntersection(bool &flag1, bool &flag2, bool &flag3, float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r) {
+bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r, int &index) {
 
-
+    bool flag1 = false;
+    bool flag2 = false;
+    bool flag3 = false;
+    int index1 = 0;
+    int index2 = 0;
+    int index3 = 0;
+    float tempt1 = INFINITY;
+    float tempt2 = INFINITY;
+    float tempt3 = INFINITY;
+    //these will determine which object is intersected.
+    
                 for(int i = 0; i < scene.triangles.size() ; i++ ){
                     
                     parser::Face f;
@@ -124,8 +134,14 @@ bool anyIntersection(bool &flag1, bool &flag2, bool &flag3, float &t1, float &t2
                     Vec3f& a = scene.vertex_data[index_a-1];
                     Vec3f& b =scene.vertex_data[index_b-1];
                     Vec3f& c = scene.vertex_data[index_c-1];
-                    if(rayTriangleIntersect(a,b,c,r,t1)){
-                        flag1 = true;
+                    if(rayTriangleIntersect(a,b,c,r,tempt1)){
+                        if(tempt1 < t1){
+                            t1 = tempt1;
+                            flag1 = true;
+                            index1 = i;
+                        }
+                        
+                        
                     }     
                 }
                 for(int i = 0; i < scene.spheres.size() ; i++ ){
@@ -138,11 +154,14 @@ bool anyIntersection(bool &flag1, bool &flag2, bool &flag3, float &t1, float &t2
                     //printf("a:%d,b:%d,c:%d\n",index_a,index_b,index_c);
                     Vec3f& center = scene.vertex_data[center_vertex_id-1];
                     
-                    if(raySphereIntersect(center,radius,r,t2)){
-                        flag2 = true;
-                        
+                    if(raySphereIntersect(center,radius,r,tempt2)){
+                        if(tempt2 < t2){
+                            t2 = tempt2;
+                            flag2 = true;
+                            index2 = i;}
                     }     
                 }
+
                 for(int i = 0; i < scene.meshes.size() ; i++ ){
                     
                     parser::Mesh f;
@@ -160,15 +179,30 @@ bool anyIntersection(bool &flag1, bool &flag2, bool &flag3, float &t1, float &t2
                         Vec3f& a = scene.vertex_data[index_a-1];
                         Vec3f& b = scene.vertex_data[index_b-1];
                         Vec3f& c = scene.vertex_data[index_c-1];
-                        if(rayTriangleIntersect(a,b,c,r,t3)){
-                            flag3 = true;
-                        }     
+                        if(rayTriangleIntersect(a,b,c,r,tempt3)){
+                            if(tempt3 < t3){
+                                t3 = tempt3;
+                                flag3 = true;
+                                index3 = i;
+                            }     
+                        }
                     }
                 }
-                if(flag1 || flag2 || flag3 == false){
+                if((flag1 || flag2 || flag3) == false){
                         return false;
                 }
-
+                else{
+                    mint = minOfThree(t1,t2,t3);
+                    if(mint == t1){
+                        index = index1;
+                    }
+                    else if(mint == t2){
+                        index = index2;
+                    }
+                    else if(mint == t3){
+                        index = index3;
+                    }
+                }
     return true;
 
 }
@@ -179,15 +213,13 @@ bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  i
     Ray lightRay(lightPosition, (intersection - lightPosition).Normalize());
     float maxDistance = (intersection - lightPosition).Length();
 
-                bool flag1 = false;
-                bool flag2 = false;
-                bool flag3 = false;
-                float t1 = INFINITY;
-                float t2 = INFINITY;
-                float t3 = INFINITY;
-                float minT = INFINITY;
+    float t1 = INFINITY;
+    float t2 = INFINITY;
+    float t3 = INFINITY;
+    float minT = INFINITY;
+    int index = 0;
 
-                bool intersectionExists = anyIntersection(flag1, flag2, flag3, t1, t2, t3, minT, scene, lightRay);
+                bool intersectionExists = anyIntersection(t1, t2, t3, minT, scene, lightRay,index);
 
                 if(intersectionExists){
                     if(lightRay.pointIsAt(minT).Length() < maxDistance){
@@ -195,4 +227,18 @@ bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  i
                     }
                 }
  return false;
+}
+
+Vec3f pointShade(Vec3f intersectionPoint, Ray normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShade){
+
+    //Vec3f color = Vec3f(0,0,0);
+    Vec3f ambient = scene.ambient_light.PointWise(material.ambient);
+    if(inShade){
+        return ambient;
+    }
+
+    else{
+        Vec3f color = Vec3f(255,255,255);
+        return color;
+    }
 }
