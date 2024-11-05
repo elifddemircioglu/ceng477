@@ -208,10 +208,10 @@ bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene 
 }
 
 
-bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  intersection, parser::Scene scene) {
+bool isThereObjectInBetween(Vec3f lightPosition , Vec3f  shadowPoint, parser::Scene scene) {
 
-    Ray lightRay(lightPosition, (intersection - lightPosition).Normalize());
-    float maxDistance = (intersection - lightPosition).Length();
+    Ray shadowRay(shadowPoint, (lightPosition-shadowPoint));
+    float maxDistance = (shadowPoint - lightPosition).Length();
 
     float t1 = INFINITY;
     float t2 = INFINITY;
@@ -219,10 +219,10 @@ bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  i
     float minT = INFINITY;
     int index = 0;
 
-                bool intersectionExists = anyIntersection(t1, t2, t3, minT, scene, lightRay,index);
+                bool intersectionExists = anyIntersection(t1, t2, t3, minT, scene, shadowRay, index);
 
                 if(intersectionExists){
-                    if(lightRay.pointIsAt(minT).Length() < maxDistance){
+                    if(shadowRay.pointIsAt(minT).Length() < maxDistance){
                         return true;
                     }
                 }

@@ -17,7 +17,7 @@ bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const 
 
 bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r, int &index);
 
-bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  intersection, parser::Scene scene);
+bool isThereObjectInBetween(Vec3f lightPosition, Vec3f  shadowPoint, parser::Scene scene);
 
 Vec3f pointShade(Vec3f intersectionPoint, Vec3f normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShadow);
 

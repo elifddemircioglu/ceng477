@@ -106,10 +106,12 @@ int main(int argc, char* argv[])
                                 //bu demektir ki bi sphere ile intersect ettik en yakında.
                                 //sphere normal calculate
 
-                                Vec3f sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1]).Normalize();
+                                Vec3f sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1]);
                                 Vec3f shadowPoint = r.pointIsAt(minT) + sphereNormal1*(scene.shadow_ray_epsilon);
-                                bool isInShade = isThereObjectInBetween(lightPosition, lightIntensity, shadowPoint, scene);
-                                color = color + pointShade(r.pointIsAt(minT), sphereNormal1, r.direction,scene.materials[scene.spheres[index].material_id-1], scene, isInShade);
+                                bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene);
+                                if(!isInShadow){
+                                    color += Vec3f(255,0,0);
+                                }
                             }
                             else if(minT == t3){
                                 //mesh normal calculate
