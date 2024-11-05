@@ -101,8 +101,8 @@ bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const 
     return (u >= -kEpsilon) && (v >= -kEpsilon) && (w >= -kEpsilon);
 }
 
-Ray sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter){
-    return Ray(intersectionPoint, (intersectionPoint - sphereCenter).Normalize());
+Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter){
+    return (intersectionPoint-sphereCenter).Normalize();
 }
 
 Ray triangleNormal(Vec3f a, Vec3f b, Vec3f c){
@@ -229,12 +229,11 @@ bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  i
  return false;
 }
 
-Vec3f pointShade(Vec3f intersectionPoint, Ray normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShade){
+Vec3f pointShade(Vec3f intersectionPoint, Vec3f normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShadow){
 
     //Vec3f color = Vec3f(0,0,0);
-    Vec3f ambient = scene.ambient_light.PointWise(material.ambient);
-    if(inShade){
-        return ambient;
+    if(inShadow){
+        return Vec3f(0,0,0);
     }
 
     else{

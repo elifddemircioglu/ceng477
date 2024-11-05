@@ -82,7 +82,9 @@ int main(int argc, char* argv[])
                 image[k+2] = scene.background_color.z;
             }
             else{
-                        Vec3f color = Vec3f(255,0,0);
+               // burada materialı doğru ver
+                        Vec3f color = scene.ambient_light.PointWise(scene.materials[scene.spheres[index].material_id-1].ambient);
+                        
 
                         //her point lightin renge sağladığı değerleri ayrı ayrı ekleyeceğiz.
                         for(int i = 0; i< scene.point_lights.size();i++ ){
@@ -93,22 +95,36 @@ int main(int argc, char* argv[])
                             Vec3f lightIntensity = scene.point_lights[i].intensity;
 
                             //eğer o point lighta göre gölgedeyse sadece ambient değeri alınacak.
-                            bool isInShade = isThereObjectInBetween(lightPosition, lightIntensity, r.pointIsAt(minT), scene);
+                            
 
                             if(minT == t1){
+                                color += Vec3f(0,0,255);
                                 //bu demektir ki bi triangle ile intersect ettik en yakında.
                                 //triangle normal calculate
                             }
                             else if(minT == t2){
                                 //bu demektir ki bi sphere ile intersect ettik en yakında.
                                 //sphere normal calculate
-                                Ray sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1]);
-                                color = color + pointShade(r.pointIsAt(minT), sphereNormal1, r.direction, scene.materials[scene.spheres[index].material_id-1], scene, isInShade);
+
+                                Vec3f sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1]).Normalize();
+                                Vec3f shadowPoint = r.pointIsAt(minT) + sphereNormal1*(scene.shadow_ray_epsilon);
+                                bool isInShade = isThereObjectInBetween(lightPosition, lightIntensity, shadowPoint, scene);
+                                color = color + pointShade(r.pointIsAt(minT), sphereNormal1, r.direction,scene.materials[scene.spheres[index].material_id-1], scene, isInShade);
                             }
                             else if(minT == t3){
                                 //mesh normal calculate
+                                color += Vec3f(0,255,0);
                             }
                         } 
+                        if(color.x > 255){
+                            color.x = 255;
+                        }
+                        if(color.y > 255){
+                            color.y = 255;
+                        }
+                        if(color.z > 255){
+                            color.z = 255;
+                        }
                         image[k] = color.x;
                         image[k+1] = color.y;
                         image[k+2] = color.z;

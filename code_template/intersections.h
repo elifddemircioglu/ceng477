@@ -19,10 +19,10 @@ bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene 
 
 bool isThereObjectInBetween(Vec3f lightPosition, Vec3f lightIntensity , Vec3f  intersection, parser::Scene scene);
 
-Vec3f pointShade(Vec3f intersectionPoint, Ray normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShade);
+Vec3f pointShade(Vec3f intersectionPoint, Vec3f normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShadow);
 
 
-Ray sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter);
+Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter);
 
 Ray triangleNormal(Vec3f a, Vec3f b, Vec3f c);
 
