@@ -105,8 +105,8 @@ Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter){
     return (intersectionPoint-sphereCenter).Normalize();
 }
 
-Ray triangleNormal(Vec3f a, Vec3f b, Vec3f c){
-    return Ray(a, (b - a).CrossProduct(c - a).Normalize());
+Vec3f triangleNormal(Vec3f a, Vec3f b, Vec3f c){
+    return Vec3f (b - a).CrossProduct(c - a).Normalize();
 }
 
 
@@ -229,15 +229,39 @@ bool isThereObjectInBetween(Vec3f lightPosition , Vec3f  shadowPoint, parser::Sc
  return false;
 }
 
-Vec3f pointShade(Vec3f intersectionPoint, Vec3f normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShadow){
+Vec3f calculateSpecular(Vec3f N, Vec3f L, Vec3f V, 
+                        Vec3f lightIntensity, Vec3f specularReflectance, 
+                        float phongExponent) {
+    // Normalize the input vectors
+    Vec3f N_normalized = N.Normalize();
+    Vec3f L_normalized = L.Normalize();
+    Vec3f V_normalized = V.Normalize();
 
-    //Vec3f color = Vec3f(0,0,0);
-    if(inShadow){
-        return Vec3f(0,0,0);
-    }
+    // Calculate the halfway vector
+    Vec3f H = (L_normalized + V_normalized).Normalize(); // Halfway vector
 
-    else{
-        Vec3f color = Vec3f(255,255,255);
-        return color;
-    }
+    // Calculate the dot product of H and N
+    float dotHN = std::max(0.0f, H * N_normalized);
+
+    // Calculate the specular component using the specular reflectance
+    Vec3f specular = lightIntensity.PointWise(specularReflectance) * std::pow(dotHN, phongExponent);
+
+    return specular; // Return the computed specular color
 }
+
+
+// Assuming Vector3 for 3D vectors and Color for RGB color values
+// Assuming Vector3 for 3D vectors and Color for RGB color values
+Vec3f calculateDiffuse(Vec3f N, Vec3f L, Vec3f lightIntensity, Vec3f diffuseReflectance, float distance) {
+    // Dot product between normal and light direction
+    float dotNL = std::max(0.0f, N * L);
+    
+    // Calculate the attenuation based on the distance
+    float attenuation = 1.0f / (distance * distance); // Inverse square law
+
+    // Calculate the diffuse component as the product of light intensity, surface color, and dot product, considering attenuation
+    Vec3f diffuse = (lightIntensity.PointWise(diffuseReflectance) * attenuation) * dotNL;
+
+    return diffuse;
+}
+

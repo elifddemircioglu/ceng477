@@ -83,11 +83,15 @@ int main(int argc, char* argv[])
             }
             else{
                // burada materialı doğru ver
-                        Vec3f color = scene.ambient_light.PointWise(scene.materials[scene.spheres[index].material_id-1].ambient);
+               Vec3f color;
+                    if(minT == t1){color = scene.ambient_light.PointWise(scene.materials[scene.triangles[index].material_id-1].ambient);} //triangle
+                    else if(minT == t2){color = scene.ambient_light.PointWise(scene.materials[scene.spheres[index].material_id-1].ambient);} //sphere
+                    else if(minT == t3){color = scene.ambient_light.PointWise(scene.materials[scene.meshes[index].material_id-1].ambient);} //mesh
+                        
                         
 
                         //her point lightin renge sağladığı değerleri ayrı ayrı ekleyeceğiz.
-                        for(int i = 0; i< scene.point_lights.size();i++ ){
+                        for(int i = 0; i< scene.point_lights.size() ;i++ ){
 
                              //shading calculations
 
@@ -110,7 +114,9 @@ int main(int argc, char* argv[])
                                 Vec3f shadowPoint = r.pointIsAt(minT) + sphereNormal1*(scene.shadow_ray_epsilon);
                                 bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene);
                                 if(!isInShadow){
-                                    color += Vec3f(255,0,0);
+                                    Vec3f lightDir = lightPosition - r.pointIsAt(minT);
+                                    color += calculateDiffuse(sphereNormal1, lightDir, lightIntensity, scene.materials[scene.spheres[index].material_id-1].diffuse, (lightPosition - r.pointIsAt(minT)).Length());
+                                    color += calculateSpecular(sphereNormal1, lightDir,r.direction , lightIntensity, scene.materials[scene.spheres[index].material_id-1].specular, scene.materials[scene.spheres[index].material_id-1].phong_exponent);
                                 }
                             }
                             else if(minT == t3){

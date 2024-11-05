@@ -24,6 +24,13 @@ Vec3f pointShade(Vec3f intersectionPoint, Vec3f normal, Vec3f viewDirection, par
 
 Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter);
 
-Ray triangleNormal(Vec3f a, Vec3f b, Vec3f c);
+Vec3f triangleNormal(Vec3f a, Vec3f b, Vec3f c);
 
+
+
+Vec3f calculateDiffuse( Vec3f N,  Vec3f L,  Vec3f lightIntensity,  Vec3f surfaceColor, float distance);
+
+Vec3f calculateSpecular(Vec3f N,  Vec3f L, Vec3f V, 
+                        Vec3f lightIntensity, Vec3f specularReflectance, 
+                        float phongExponent);
 #endif
