@@ -106,8 +106,8 @@ int main(int argc, char* argv[])
                                 //triangle normal calculate
                                 Vec3f triangleNormal1 = triangleNormal(scene.vertex_data[scene.triangles[index].indices.v0_id-1],scene.vertex_data[scene.triangles[index].indices.v1_id-1],scene.vertex_data[scene.triangles[index].indices.v2_id-1]);
                                 Vec3f shadowPoint = r.pointIsAt(minT) + (triangleNormal1*scene.shadow_ray_epsilon);
-                                bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene,scene.shadow_ray_epsilon);
-                                //belki burda yön sabittir shadow pointten light deil de orijinale giden yönü alabiliriz.
+                                bool isInShadow = isThereObjectInBetween(lightPosition, r.pointIsAt(minT), shadowPoint, scene,scene.shadow_ray_epsilon);
+                                //belki burda yön sabittir shadow pointten light deil de orijinal pointten giden yönü alabiliriz. isinsgadow için
                                 if(!isInShadow){
                                     Vec3f lightDir = lightPosition - r.pointIsAt(minT);
                                     Vec3f radiance = findRadiance(scene.point_lights[i], r.pointIsAt(minT));
@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
 
                                 Vec3f sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1],scene.shadow_ray_epsilon);
                                 Vec3f shadowPoint = r.pointIsAt(minT) + (sphereNormal1*scene.shadow_ray_epsilon);
-                                bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene,scene.shadow_ray_epsilon);
+                                bool isInShadow = isThereObjectInBetween(lightPosition, r.pointIsAt(minT),shadowPoint, scene,scene.shadow_ray_epsilon);
                                 if(!isInShadow){
                                     Vec3f lightDir = lightPosition - r.pointIsAt(minT);
                                     Vec3f radiance = findRadiance(scene.point_lights[i], r.pointIsAt(minT));
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
                                 for(int face = 0; face < scene.meshes[index].faces.size(); face ++){
                                     Vec3f triangleNormal1 = triangleNormal(scene.vertex_data[scene.meshes[index].faces[face].v0_id-1],scene.vertex_data[scene.meshes[index].faces[face].v1_id-1],scene.vertex_data[scene.meshes[index].faces[face].v2_id-1]);
                                     Vec3f shadowPoint = r.pointIsAt(minT) + (triangleNormal1*scene.shadow_ray_epsilon);
-                                    bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene,scene.shadow_ray_epsilon);
+                                    bool isInShadow = isThereObjectInBetween(lightPosition, r.pointIsAt(minT), shadowPoint, scene,scene.shadow_ray_epsilon);
                                     if(!isInShadow){
                                         Vec3f lightDir = lightPosition - r.pointIsAt(minT);
                                         Vec3f radiance = findRadiance(scene.point_lights[i], r.pointIsAt(minT));

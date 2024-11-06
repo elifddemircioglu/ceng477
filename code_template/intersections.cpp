@@ -219,10 +219,11 @@ bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene 
 }
 
 
-bool isThereObjectInBetween(Vec3f lightPosition , Vec3f  shadowPoint, parser::Scene scene, float epsilon) {
+bool isThereObjectInBetween(Vec3f lightPosition ,Vec3f intersection, Vec3f  shadowPoint, parser::Scene scene, float epsilon) {
 
-    Ray shadowRay(shadowPoint, (lightPosition-shadowPoint));
-    float maxDistance = (shadowPoint - lightPosition).Length();
+    Ray shadowRay(shadowPoint, (lightPosition-intersection));
+    //
+    float maxDistance = (lightPosition - intersection).Length();
 
     float t1 = INFINITY;
     float t2 = INFINITY;
@@ -278,7 +279,9 @@ Vec3f findSpecular( Vec3f N,  Vec3f Wi, Vec3f R, Vec3f specularReflectance, Vec3
     Vec3f w_o = Wo.Normalize();
 
     double n_dot_i = N*(w_i);  // Dot product between normal and light direction
-    if (n_dot_i <= 0) {
+    n_dot_i = std::max(0.0, n_dot_i);
+
+    if (n_dot_i == 0) {
         return Vec3f(0.0f, 0.0f, 0.0f);  //light is behind the surface
     }
 
@@ -292,7 +295,7 @@ Vec3f findSpecular( Vec3f N,  Vec3f Wi, Vec3f R, Vec3f specularReflectance, Vec3
 
     power = pow(cosAlpha, phongExponent); // n_dot_h ^ p
 
-    specular = specularReflectance.PointWise(radience) * power ;
+    specular = (specularReflectance.PointWise(radience)) * power ;
 
     return specular;
 }
