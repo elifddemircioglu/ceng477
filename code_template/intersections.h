@@ -15,22 +15,21 @@ bool raySphereIntersect(const Vec3f &center, float radius, const Ray &ray, float
 
 bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const Ray &ray, float &t);
 
-bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r, int &index);
+bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r, int &index, float epsilon);
 
-bool isThereObjectInBetween(Vec3f lightPosition, Vec3f  shadowPoint, parser::Scene scene);
+bool isThereObjectInBetween(Vec3f lightPosition, Vec3f  shadowPoint, parser::Scene scene,  float epsilon);
 
-Vec3f pointShade(Vec3f intersectionPoint, Vec3f normal, Vec3f viewDirection, parser::Material material, parser::Scene scene, bool inShadow);
-
-
-Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter);
+Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter, float epsilon);
 
 Vec3f triangleNormal(Vec3f a, Vec3f b, Vec3f c);
 
+Vec3f findRadiance( parser::PointLight pointLight,  Vec3f intersectionPoint);
 
+//Vec3f calculateDiffuse( Vec3f N,  Vec3f L,  Vec3f lightIntensity,  Vec3f surfaceColor, float distance);
 
-Vec3f calculateDiffuse( Vec3f N,  Vec3f L,  Vec3f lightIntensity,  Vec3f surfaceColor, float distance);
+//Vec3f calculateSpecular(Vec3f N,  Vec3f L, Vec3f V, Vec3f lightIntensity, Vec3f specularReflectance, float phongExponent);
 
-Vec3f calculateSpecular(Vec3f N,  Vec3f L, Vec3f V, 
-                        Vec3f lightIntensity, Vec3f specularReflectance, 
-                        float phongExponent);
+Vec3f findDiffuse( Vec3f N,  Vec3f Wi, Vec3f diffuseReflectance, Vec3f radiance);
+Vec3f findSpecular( Vec3f N,  Vec3f Wi, Vec3f R, Vec3f specularReflectance, Vec3f radience, float phongExponent);
+
 #endif

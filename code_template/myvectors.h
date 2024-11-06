@@ -30,6 +30,7 @@
         }
 
         Vec3f operator*(float rhs) const { return Vec3f(x * rhs, y * rhs, z * rhs); }
+        
 
         Vec3f operator/(float rhs) const {
             Vec3f result(x / rhs, y / rhs, z / rhs);

@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
                 float minT = INFINITY;
                 int index = 0;
 
-            bool isAnyIntersection = anyIntersection(t1, t2, t3, minT, scene, r, index);
+            bool isAnyIntersection = anyIntersection(t1, t2, t3, minT, scene, r, index, scene.shadow_ray_epsilon);
                 
             if(!isAnyIntersection){
                 image[k] = scene.background_color.x;
@@ -102,26 +102,56 @@ int main(int argc, char* argv[])
                             
 
                             if(minT == t1){
-                                color += Vec3f(0,0,255);
                                 //bu demektir ki bi triangle ile intersect ettik en yakında.
                                 //triangle normal calculate
+                                Vec3f triangleNormal1 = triangleNormal(scene.vertex_data[scene.triangles[index].indices.v0_id-1],scene.vertex_data[scene.triangles[index].indices.v1_id-1],scene.vertex_data[scene.triangles[index].indices.v2_id-1]);
+                                Vec3f shadowPoint = r.pointIsAt(minT) + (triangleNormal1*scene.shadow_ray_epsilon);
+                                bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene,scene.shadow_ray_epsilon);
+                                //belki burda yön sabittir shadow pointten light deil de orijinale giden yönü alabiliriz.
+                                if(!isInShadow){
+                                    Vec3f lightDir = lightPosition - r.pointIsAt(minT);
+                                    Vec3f radiance = findRadiance(scene.point_lights[i], r.pointIsAt(minT));
+                                    //color += calculateDiffuse(triangleNormal1, lightDir, lightIntensity, scene.materials[scene.triangles[index].material_id-1].diffuse, (lightPosition - r.pointIsAt(minT)).Length());
+                                    //color += calculateSpecular(triangleNormal1, lightDir,r.direction , lightIntensity, scene.materials[scene.triangles[index].material_id-1].specular, scene.materials[scene.triangles[index].material_id-1].phong_exponent);
+                                    color += findDiffuse(triangleNormal1, lightDir, scene.materials[scene.triangles[index].material_id-1].diffuse, radiance);
+                                    color += findSpecular(triangleNormal1, lightDir, r.direction, scene.materials[scene.triangles[index].material_id-1].specular, radiance, scene.materials[scene.triangles[index].material_id-1].phong_exponent);
+                                }
                             }
+
                             else if(minT == t2){
                                 //bu demektir ki bi sphere ile intersect ettik en yakında.
                                 //sphere normal calculate
 
-                                Vec3f sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1]);
-                                Vec3f shadowPoint = r.pointIsAt(minT) + sphereNormal1*(scene.shadow_ray_epsilon);
-                                bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene);
+                                Vec3f sphereNormal1 = sphereNormal(r.pointIsAt(minT), scene.vertex_data[scene.spheres[index].center_vertex_id-1],scene.shadow_ray_epsilon);
+                                Vec3f shadowPoint = r.pointIsAt(minT) + (sphereNormal1*scene.shadow_ray_epsilon);
+                                bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene,scene.shadow_ray_epsilon);
                                 if(!isInShadow){
                                     Vec3f lightDir = lightPosition - r.pointIsAt(minT);
-                                    color += calculateDiffuse(sphereNormal1, lightDir, lightIntensity, scene.materials[scene.spheres[index].material_id-1].diffuse, (lightPosition - r.pointIsAt(minT)).Length());
-                                    color += calculateSpecular(sphereNormal1, lightDir,r.direction , lightIntensity, scene.materials[scene.spheres[index].material_id-1].specular, scene.materials[scene.spheres[index].material_id-1].phong_exponent);
+                                    Vec3f radiance = findRadiance(scene.point_lights[i], r.pointIsAt(minT));
+                                    
+                                    //color += calculateDiffuse(sphereNormal1, lightDir, lightIntensity, scene.materials[scene.spheres[index].material_id-1].diffuse, (lightPosition - r.pointIsAt(minT)).Length());
+                                    //color += calculateSpecular(sphereNormal1, lightDir,r.direction , lightIntensity, scene.materials[scene.spheres[index].material_id-1].specular, scene.materials[scene.spheres[index].material_id-1].phong_exponent);
+                                    color += findDiffuse(sphereNormal1, lightDir, scene.materials[scene.spheres[index].material_id-1].diffuse, radiance);
+                                    color += findSpecular(sphereNormal1, lightDir, r.direction, scene.materials[scene.spheres[index].material_id-1].specular, radiance, scene.materials[scene.spheres[index].material_id-1].phong_exponent);
                                 }
                             }
+
                             else if(minT == t3){
                                 //mesh normal calculate
-                                color += Vec3f(0,255,0);
+                                for(int face = 0; face < scene.meshes[index].faces.size(); face ++){
+                                    Vec3f triangleNormal1 = triangleNormal(scene.vertex_data[scene.meshes[index].faces[face].v0_id-1],scene.vertex_data[scene.meshes[index].faces[face].v1_id-1],scene.vertex_data[scene.meshes[index].faces[face].v2_id-1]);
+                                    Vec3f shadowPoint = r.pointIsAt(minT) + (triangleNormal1*scene.shadow_ray_epsilon);
+                                    bool isInShadow = isThereObjectInBetween(lightPosition, shadowPoint, scene,scene.shadow_ray_epsilon);
+                                    if(!isInShadow){
+                                        Vec3f lightDir = lightPosition - r.pointIsAt(minT);
+                                        Vec3f radiance = findRadiance(scene.point_lights[i], r.pointIsAt(minT));
+                                        //color += calculateDiffuse(triangleNormal1, lightDir, lightIntensity, scene.materials[scene.meshes[index].material_id-1].diffuse, (lightPosition - r.pointIsAt(minT)).Length());
+                                        //color += calculateSpecular(triangleNormal1, lightDir,r.direction , lightIntensity, scene.materials[scene.meshes[index].material_id-1].specular, scene.materials[scene.meshes[index].material_id-1].phong_exponent);
+                                        color += findDiffuse(triangleNormal1, lightDir, scene.materials[scene.meshes[index].material_id-1].diffuse, radiance);
+                                        color += findSpecular(triangleNormal1, lightDir, r.direction, scene.materials[scene.meshes[index].material_id-1].specular, radiance, scene.materials[scene.meshes[index].material_id-1].phong_exponent);
+                                    }
+
+                                }
                             }
                         } 
                         if(color.x > 255){

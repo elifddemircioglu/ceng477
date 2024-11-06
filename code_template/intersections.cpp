@@ -1,6 +1,6 @@
 #include "intersections.h"
 #include "parser.h"
-
+#include <cmath>
 float kEpsilon = 1e-3;
 
 float mini(float a, float b)
@@ -101,16 +101,27 @@ bool rayTriangleIntersect(const Vec3f &a, const Vec3f &b, const Vec3f &c, const 
     return (u >= -kEpsilon) && (v >= -kEpsilon) && (w >= -kEpsilon);
 }
 
-Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter){
-    return (intersectionPoint-sphereCenter).Normalize();
+Vec3f sphereNormal(Vec3f intersectionPoint, Vec3f sphereCenter, float epsilon) {
+    Vec3f normal = intersectionPoint - sphereCenter;
+    float magnitude = normal.Length();  
+
+    // Avoid division by zero or very small values
+    if (magnitude < epsilon) {
+        // Handle edge case: return a default direction if the magnitude is too small
+        return normal;  // or some other predefined valid direction
+    }
+
+    normal /= magnitude;  // Normalize the normal vector
+    return normal;  // Return the normalized normal vector
 }
+
 
 Vec3f triangleNormal(Vec3f a, Vec3f b, Vec3f c){
     return Vec3f (b - a).CrossProduct(c - a).Normalize();
 }
 
 
-bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r, int &index) {
+bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene scene, const Ray &r, int &index, float epsilon) {
 
     bool flag1 = false;
     bool flag2 = false;
@@ -135,7 +146,7 @@ bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene 
                     Vec3f& b =scene.vertex_data[index_b-1];
                     Vec3f& c = scene.vertex_data[index_c-1];
                     if(rayTriangleIntersect(a,b,c,r,tempt1)){
-                        if(tempt1 < t1){
+                        if((tempt1 > epsilon) && (tempt1 < t1)){
                             t1 = tempt1;
                             flag1 = true;
                             index1 = i;
@@ -155,7 +166,7 @@ bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene 
                     Vec3f& center = scene.vertex_data[center_vertex_id-1];
                     
                     if(raySphereIntersect(center,radius,r,tempt2)){
-                        if(tempt2 < t2){
+                        if((tempt2 > epsilon) && (tempt2 < t2)){
                             t2 = tempt2;
                             flag2 = true;
                             index2 = i;}
@@ -180,7 +191,7 @@ bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene 
                         Vec3f& b = scene.vertex_data[index_b-1];
                         Vec3f& c = scene.vertex_data[index_c-1];
                         if(rayTriangleIntersect(a,b,c,r,tempt3)){
-                            if(tempt3 < t3){
+                            if((tempt3 > epsilon) && (tempt3 < t3)){
                                 t3 = tempt3;
                                 flag3 = true;
                                 index3 = i;
@@ -208,7 +219,7 @@ bool anyIntersection(float &t1, float &t2, float &t3,float &mint, parser::Scene 
 }
 
 
-bool isThereObjectInBetween(Vec3f lightPosition , Vec3f  shadowPoint, parser::Scene scene) {
+bool isThereObjectInBetween(Vec3f lightPosition , Vec3f  shadowPoint, parser::Scene scene, float epsilon) {
 
     Ray shadowRay(shadowPoint, (lightPosition-shadowPoint));
     float maxDistance = (shadowPoint - lightPosition).Length();
@@ -219,7 +230,7 @@ bool isThereObjectInBetween(Vec3f lightPosition , Vec3f  shadowPoint, parser::Sc
     float minT = INFINITY;
     int index = 0;
 
-                bool intersectionExists = anyIntersection(t1, t2, t3, minT, scene, shadowRay, index);
+                bool intersectionExists = anyIntersection(t1, t2, t3, minT, scene, shadowRay, index ,epsilon);
 
                 if(intersectionExists){
                     if(shadowRay.pointIsAt(minT).Length() < maxDistance){
@@ -229,39 +240,59 @@ bool isThereObjectInBetween(Vec3f lightPosition , Vec3f  shadowPoint, parser::Sc
  return false;
 }
 
-Vec3f calculateSpecular(Vec3f N, Vec3f L, Vec3f V, 
-                        Vec3f lightIntensity, Vec3f specularReflectance, 
-                        float phongExponent) {
-    // Normalize the input vectors
-    Vec3f N_normalized = N.Normalize();
-    Vec3f L_normalized = L.Normalize();
-    Vec3f V_normalized = V.Normalize();
+Vec3f findRadiance( parser::PointLight pointLight,  Vec3f intersectionPoint)
+{
+    Vec3f radiance;
+    Vec3f wdir = pointLight.position- intersectionPoint;
+    float d_square = wdir.Length()*wdir.Length();
 
-    // Calculate the halfway vector
-    Vec3f H = (L_normalized + V_normalized).Normalize(); // Halfway vector
-
-    // Calculate the dot product of H and N
-    float dotHN = std::max(0.0f, H * N_normalized);
-
-    // Calculate the specular component using the specular reflectance
-    Vec3f specular = lightIntensity.PointWise(specularReflectance) * std::pow(dotHN, phongExponent);
-
-    return specular; // Return the computed specular color
+    if(d_square != 0.0)
+    {
+	    radiance.x = pointLight.intensity.x/d_square;
+	    radiance.y = pointLight.intensity.y/d_square;
+	    radiance.z = pointLight.intensity.z/d_square;
+    }
+    return radiance;
 }
 
+//Wi intersectiondan lighta olan yon
+Vec3f findDiffuse( Vec3f N,  Vec3f Wi, Vec3f diffuseReflectance, Vec3f radiance)
+{
+    Vec3f w_i_normalized = Wi.Normalize();
 
-// Assuming Vector3 for 3D vectors and Color for RGB color values
-// Assuming Vector3 for 3D vectors and Color for RGB color values
-Vec3f calculateDiffuse(Vec3f N, Vec3f L, Vec3f lightIntensity, Vec3f diffuseReflectance, float distance) {
-    // Dot product between normal and light direction
-    float dotNL = std::max(0.0f, N * L);
-    
-    // Calculate the attenuation based on the distance
-    float attenuation = 1.0f / (distance * distance); // Inverse square law
+    double cosTheta = 0;
+    double wi_dot_n = (N*w_i_normalized);
 
-    // Calculate the diffuse component as the product of light intensity, surface color, and dot product, considering attenuation
-    Vec3f diffuse = (lightIntensity.PointWise(diffuseReflectance) * attenuation) * dotNL;
+    if(wi_dot_n > 0) cosTheta = wi_dot_n; 
+
+    Vec3f diffuse = diffuseReflectance.PointWise(radiance) * cosTheta;
 
     return diffuse;
 }
 
+Vec3f findSpecular( Vec3f N,  Vec3f Wi, Vec3f R, Vec3f specularReflectance, Vec3f radience, float phongExponent)
+{
+    Vec3f h, specular; // h: half vector
+    Vec3f Wo =  R *(-1); // w_o = -R
+    Vec3f w_i = Wi.Normalize();
+    Vec3f w_o = Wo.Normalize();
+
+    double n_dot_i = N*(w_i);  // Dot product between normal and light direction
+    if (n_dot_i <= 0) {
+        return Vec3f(0.0f, 0.0f, 0.0f);  //light is behind the surface
+    }
+
+    h = (w_i + w_o).Normalize(); // h = (w_i + w_o) / ||w_i + w_o||
+
+    double cosAlpha = 0;
+    double n_dot_h = (N* h);
+    double power;
+
+    if(n_dot_h > 0) cosAlpha= n_dot_h;
+
+    power = pow(cosAlpha, phongExponent); // n_dot_h ^ p
+
+    specular = specularReflectance.PointWise(radience) * power ;
+
+    return specular;
+}
