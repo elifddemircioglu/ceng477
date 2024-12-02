@@ -12,6 +12,8 @@
 #include "Helpers.h"
 #include "Scene.h"
 
+#include <unordered_set>
+
 using namespace tinyxml2;
 using namespace std;
 
@@ -358,7 +360,237 @@ void Scene::convertPPMToPNG(string ppmFileName, int osType)
 /*
 	Transformations, clipping, culling, rasterization are done here.
 */
+
+
+ void Scene::makeTransformations(std::unordered_map<int, Vec3> &vertexMap){
+
+	for(int k = 0; k < meshes.size(); k++){
+
+		Mesh *mesh = meshes[k];
+
+		std::unordered_set<int> hashVertexIds;
+		vector<int> distinctVertexIds;
+
+		//bu kullanılcak
+		std::unordered_map<int, Vec3> transformedVerticesMap;
+
+		//after this loop, distinctVertexIds will contain all the distinct vertex ids of the mesh so we can apply the transformation exactly once to them
+		for(int j = 0; j < mesh->triangles.size(); j++){
+
+			Triangle currentTriangle = mesh->triangles[j];
+
+			for (int v = 0; v < 3; v++) { //for each vertex of the triangle
+				int vertexId = currentTriangle.vertexIds[v];
+				if (hashVertexIds.insert(vertexId).second) { //will return true if inserted successfully
+					distinctVertexIds.push_back(vertexId);
+				}
+        	}
+		}
+		//we have this loop because we want to make the transformations on top of each other. so we will change only this list in the below loops.
+		//bunun yerine hepsi için hem arada boşluk olmayacak şekilde diz hpsini yan yana yaz ve de distinct idleri de bi listede tut.
+		for(int j = 0; j < distinctVertexIds.size(); j++){
+			Vec3 vertexCoord;
+			vertexCoord.x = vertices[distinctVertexIds[j]-1]->x;
+			vertexCoord.y = vertices[distinctVertexIds[j]-1]->y;
+			vertexCoord.z = vertices[distinctVertexIds[j]-1]->z;
+			transformedVerticesMap.insert(make_pair(distinctVertexIds[j], vertexCoord));
+		}
+
+		for(int i = 0; i < mesh->numberOfTransformations; i++){
+
+			char transformationType = mesh->transformationTypes[i];
+			int transformationId = mesh->transformationIds[i];
+
+			if(transformationType == 't'){
+				Translation *translation;
+				translation = translations[transformationId-1];
+				
+				for(int j = 0; j < distinctVertexIds.size(); j++){
+					transformedVerticesMap[distinctVertexIds[j]].x += translation->tx;
+					transformedVerticesMap[distinctVertexIds[j]].y += translation->ty;
+					transformedVerticesMap[distinctVertexIds[j]].z += translation->tz;
+				}
+			}
+
+			else if(transformationType == 's'){
+				Scaling *scaling;
+				scaling = scalings[transformationId-1];
+				
+				// acaba burda direkt scale mi edicez orijine göre yoksa merkeeze taşıyıp mı scale edicez aynı noktada büyüsün diye ?
+				//after this loop, distinctVertexIds will contain all the distinct vertex ids of the mesh so we can apply the transformation exactly once to them
+				for(int j = 0; j < distinctVertexIds.size(); j++){
+					transformedVerticesMap[distinctVertexIds[j]].x *= scaling->sx;
+					transformedVerticesMap[distinctVertexIds[j]].y *= scaling->sy;
+					transformedVerticesMap[distinctVertexIds[j]].z *= scaling->sz;
+				}
+
+			}
+
+			else if(transformationType == 'r'){
+				Rotation *rotation;
+				rotation = rotations[transformationId-1];
+
+				//rodrigez formula
+				//after this loop, distinctVertexIds will contain all the distinct vertex ids of the mesh so we can apply the transformation exactly once to them
+				for(int j = 0; j < distinctVertexIds.size(); j++){
+					double angle = rotation->angle;
+
+					double ux = rotation->ux/ magnitudeOfVec3(Vec3(rotation->ux, rotation->uy, rotation->uz));
+					double uy = rotation->uy/ magnitudeOfVec3(Vec3(rotation->ux, rotation->uy, rotation->uz));
+					double uz = rotation->uz/ magnitudeOfVec3(Vec3(rotation->ux, rotation->uy, rotation->uz));
+
+					double c = cos(angle);
+					double s = sin(angle);
+					double t = 1 - c;
+
+					double x = transformedVerticesMap[distinctVertexIds[j]].x;
+					double y = transformedVerticesMap[distinctVertexIds[j]].y;
+					double z = transformedVerticesMap[distinctVertexIds[j]].z;
+
+					double xNew = (t * ux * ux + c) * x + (t * ux * uy - s * uz) * y + (t * ux * uz + s * uy) * z;
+					double yNew = (t * ux * uy + s * uz) * x + (t * uy * uy + c) * y + (t * uy * uz - s * ux) * z;
+					double zNew = (t * ux * uz - s * uy) * x + (t * uy * uz + s * ux) * y + (t * uz * uz + c) * z;
+
+					transformedVerticesMap[distinctVertexIds[j]].x = xNew;
+					transformedVerticesMap[distinctVertexIds[j]].y = yNew;
+					transformedVerticesMap[distinctVertexIds[j]].z = zNew;
+					
+				}
+			}	
+		}
+
+		//after this loop, transformedVertices will contain all the vertices of the mesh after all the transformations
+		//mesh 1s transformed vertices will be in 0th index, 2s at 1 etc.
+	}
+}
+
+
+
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
 	// TODO: Implement this function
+	std::unordered_map<int, Vec3> transformedVerticesMap;
+	makeTransformations(transformedVerticesMap);
+
+	//first lets do frustum culling
+
+	for(int i = 0 ; i < meshes.size(); i++){
+		bool isFrustumCulled = true;
+		for(int j = 0; j < [i].size(); j++){
+			if(allTransformedVertices[i][j].x){
+				meshes[i]->triangles.erase(meshes[i]->triangles.begin() + j);
+			}
+		}
+	}
+	
+
+	Matrix4 cameraMatrix;
+	cameraMatrix.values[0][0] = camera->u.x;
+	cameraMatrix.values[0][1] = camera->u.y;
+	cameraMatrix.values[0][2] = camera->u.z;
+	cameraMatrix.values[0][3] = -dotProductVec3(camera->position, camera->u);
+	cameraMatrix.values[1][0] = camera->v.x;
+	cameraMatrix.values[1][1] = camera->v.y;
+	cameraMatrix.values[1][2] = camera->v.z;
+	cameraMatrix.values[1][3] = -dotProductVec3(camera->position, camera->v);
+	cameraMatrix.values[2][0] = camera->w.x;
+	cameraMatrix.values[2][1] = camera->w.y;
+	cameraMatrix.values[2][2] = camera->w.z;
+	cameraMatrix.values[2][3] = -dotProductVec3(camera->position, camera->w);
+	cameraMatrix.values[3][3] = 1;
+
+	Matrix4 orthographicMatrix;
+	orthographicMatrix.values[0][0] = 2 / (camera->right - camera->left);
+	orthographicMatrix.values[1][1] = 2 / (camera->top - camera->bottom);
+	orthographicMatrix.values[2][2] = -2 / (camera->far - camera->near);
+	orthographicMatrix.values[0][3] = -(camera->right + camera->left) / (camera->right - camera->left);
+	orthographicMatrix.values[1][3] = -(camera->top + camera->bottom) / (camera->top - camera->bottom);
+	orthographicMatrix.values[2][3] = -(camera->far + camera->near) / (camera->far - camera->near);
+	orthographicMatrix.values[3][3] = 1;
+
+	Matrix4 p2oMatrix;
+	p2oMatrix.values[0][0] = camera->near;
+	p2oMatrix.values[1][1] = camera->near;
+	p2oMatrix.values[2][2] = camera->near + camera->far;
+	p2oMatrix.values[2][3] = camera->near * camera->far;
+	p2oMatrix.values[3][2] = -1;
+
+
+	Matrix4 viewportMatrix;
+
+	viewportMatrix.values[0][0] = camera->horRes / 2;
+	viewportMatrix.values[1][1] = camera->verRes / 2;
+	viewportMatrix.values[2][2] = 1/2;
+	viewportMatrix.values[2][3] = 1/2;
+	viewportMatrix.values[0][3] = (camera->horRes - 1) / 2;
+	viewportMatrix.values[1][3] = (camera->verRes - 1) / 2;
+
+	//şimdi her bir vertexi bu matrisle çarpıp, sonucu viewport matrisiyle çarpıp, sonucu rasterize etmemiz gerekiyor.
+	//rasterize etmek için de her bir üçgenin vertexlerini alıp, onları bir araya getirip, her bir pixelin içinde olup olmadığını kontrol etmemiz gerekiyor.
+	//eğer içindeyse, o pixelin rengini o üçgenin rengine eşitlememiz gerekiyor.
+
+	// ama ilk olarak, her bir vertexi bu matrisle çarpmamız gerekiyor.
+	//sonra her bir üçgenin vertexlerini alıp, onları bir araya getirip, her bir pixelin içinde olup olmadığını kontrol etmemiz gerekiyor.
+	//sonra perspetive divide vakti geldi.
+	//sonra rasterize
+
+	vector<vector<Vec4>> finalMatrixTransformedVerticesVec4;
+
+	for(int i = 0; i < meshes.size(); i++){
+
+		Mesh *mesh = meshes[i];
+		vector<Vec3> * transformedVertices = &(allTransformedVertices[i]);
+
+		for(int j = 0; j < transformedVertices->size(); j++){
+
+			Vec4 currentVertex = Vec4((*transformedVertices)[j].x, (*transformedVertices)[j].y, (*transformedVertices)[j].z, 1);
+			Vec4 transformedVertex = multiplyMatrixWithVec4(finalMatrix, currentVertex);
+			finalMatrixTransformedVerticesVec4[i].push_back(transformedVertex);
+		}
+	}
+
+	
+	
+
+	//clipping culling vakti
+
+	if(cullingEnabled){
+		for(int i = 0; i < meshes.size(); i++){
+			for(int j = 0; j < meshes[i]->triangles.size(); j++){
+
+				//backface culling yapılacak
+
+				Triangle currentTriangle = meshes[i]->triangles[j];
+				Vec4 v1 = finalMatrixTransformedVerticesVec4[i][currentTriangle.vertexIds[0]-1];
+				Vec4 v2 = finalMatrixTransformedVerticesVec4[i][currentTriangle.vertexIds[1]-1];
+				Vec4 v3 = finalMatrixTransformedVerticesVec4[i][currentTriangle.vertexIds[2]-1];
+
+				Vec3 v1Vec3 = Vec3(v1.x, v1.y, v1.z);
+				Vec3 v2Vec3 = Vec3(v2.x, v2.y, v2.z);
+				Vec3 v3Vec3 = Vec3(v3.x, v3.y, v3.z);
+				Vec3 center = multiplyVec3WithScalar(addVec3(addVec3(v1Vec3, v2Vec3), v3Vec3), 1/3);
+
+				Vec3 normal = crossProductVec3(subtractVec3(v2Vec3, v1Vec3), subtractVec3(v3Vec3, v1Vec3));
+				Vec3 cameraToTriangle = subtractVec3(center, Vec3(camera->position.x, camera->position.y, camera->position.z));
+
+				if(dotProductVec3(normal, cameraToTriangle) > 0){
+					meshes[i]->triangles.erase(meshes[i]->triangles.begin() + j);
+				}
+			}
+
+			if(meshes[i]->type == WIREFRAME_MESH){
+				meshes.erase(meshes.begin() + i);
+			}
+			if(meshes[i]->type == WIREFRAME_MESH){
+				//şimdi burada clipping yapılacak
+
+			}
+		}	
+	}
+
+
+
+		//perspective divide
+
+			//rasterize
 }
