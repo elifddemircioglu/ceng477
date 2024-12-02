@@ -3,7 +3,7 @@
 2. Your executable will take an input file name from command line. Input file names are not static, they can be anything.
 3. The scene will be composed of instances of meshes. A set of triangles will form a mesh with a sequence of several transformations (translation, rotation, scaling) you will be able to move, rotate, or resize a mesh (i.e., all of the triangles in the mesh). Transformations will be applied to the meshes in the order specified in the input file.
 4. You will not implement any lighting computations in this assignment. The color of each vertex will be provided as input and your goal will be to interpolate color along the edges and the surfaces of the triangles in wireframe and solid modes, respectively.
-5. 5. You will implement two types of projection transformations: orthographic projection and perspective projection.
+5. You will implement two types of projection transformations: orthographic projection and perspective projection.
 6. Use the midpoint algorithm to draw triangle edges and use the barycentric coordinates based algorithm to rasterize triangle faces.
 7. In both wireframe and solid modes, triangles whose backface is facing the viewer will be culled. Backface culling should be enabled/disabled according to the setting in input file. You should calculate normal vectors for backface culling. Default value for backface culling setting is ’disabled’.
 8. You will also implement a clipping algorithm of your choice. For example, you can choose an algorithm among algorithms that you saw on the lectures. You will do clipping for wireframe mode only. For solid mode meshes, you can assume that the mesh is completely visible to the camera.
