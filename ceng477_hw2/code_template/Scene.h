@@ -31,7 +31,7 @@ public:
 	void writeImageToPPMFile(Camera *camera);
 	void convertPPMToPNG(std::string ppmFileName, int osType);
 	void forwardRenderingPipeline(Camera *camera);
-	void makeTransformations(std::unordered_map<int, Vec3> &vertexMap);
+	void makeTransformations(std::vector<std::unordered_map<int, Vec3>> &allTransformedVertices);
 };
 
 #endif

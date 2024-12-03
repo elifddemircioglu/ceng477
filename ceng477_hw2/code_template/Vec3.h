@@ -12,6 +12,7 @@ public:
     Vec3(double x, double y, double z);
     Vec3(double x, double y, double z, int colorId);
     Vec3(const Vec3 &other);
+    Vec3 &operator=(const Vec3 &other);
 
     double getNthComponent(int n);
 

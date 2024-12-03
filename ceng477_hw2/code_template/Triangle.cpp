@@ -22,6 +22,14 @@ Triangle::Triangle(const Triangle &other)
     this->vertexIds[2] = other.vertexIds[2];
 }
 
+Triangle& Triangle::operator=(const Triangle &other) {
+        if (this != &other) {  // Protect against self-assignment
+            this->vertexIds[0] = other.vertexIds[0];
+            this->vertexIds[1] = other.vertexIds[1];
+            this->vertexIds[2] = other.vertexIds[2];
+        }
+        return *this;
+    }
 std::ostream &operator<<(std::ostream &os, const Triangle &t)
 {
     os << std::fixed << std::setprecision(0) << "Triangle with vertices (" << t.vertexIds[0] << ", " << t.vertexIds[1] << ", " << t.vertexIds[2] << ")";

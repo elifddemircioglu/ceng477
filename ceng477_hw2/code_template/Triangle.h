@@ -9,6 +9,7 @@ public:
     Triangle();
     Triangle(int vid1, int vid2, int vid3);
     Triangle(const Triangle &other);
+    Triangle& operator=(const Triangle &other);
     friend std::ostream &operator<<(std::ostream &os, const Triangle &t);
 };
 

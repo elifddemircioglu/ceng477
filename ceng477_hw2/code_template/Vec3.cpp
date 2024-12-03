@@ -33,6 +33,15 @@ Vec3::Vec3(const Vec3 &other)
     this->colorId = other.colorId;
 }
 
+Vec3& Vec3::operator=(const Vec3 &other) {
+        if (this != &other) {  // Check for self-assignment
+            this->x = other.x;
+            this->y = other.y;
+            this->z = other.z;
+        }
+    return *this;
+}
+
 double Vec3::getNthComponent(int n)
 {
     switch (n)
