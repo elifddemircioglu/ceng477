@@ -9,6 +9,8 @@
 #include "Camera.h"
 #include "Mesh.h"
 
+#include <unordered_map>
+
 class Scene
 {
 public:
@@ -30,6 +32,7 @@ public:
 	int makeBetweenZeroAnd255(double value);
 	void writeImageToPPMFile(Camera *camera);
 	void convertPPMToPNG(std::string ppmFileName, int osType);
+	bool liangBarsky_3D(float &x1, float &y1, float &z1, float &x2, float &y2, float &z2, float w1, float w2);
 	void forwardRenderingPipeline(Camera *camera);
 	void makeTransformations(std::vector<std::unordered_map<int, Vec3>> &allTransformedVertices);
 };

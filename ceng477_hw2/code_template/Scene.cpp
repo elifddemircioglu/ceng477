@@ -362,6 +362,66 @@ void Scene::convertPPMToPNG(string ppmFileName, int osType)
 */
 
 
+bool liangBarsky_3D(float &x1, float &y1, float &z1, float &x2, float &y2, float &z2, float w1, float w2) {
+    // Step 1: Compute deltas (line direction)
+    float dx = x2 - x1;
+    float dy = y2 - y1;
+    float dz = z2 - z1;
+
+    // Step 2: Define clipping boundaries
+    // The p[] array contains direction factors for clipping planes
+    float p[6] = {-dx, dx, -dy, dy, -dz, dz};
+    
+    // The q[] array contains distances from the segment's start point to the clipping planes
+    float q[6] = {x1 + w1, w1 - x1, y1 + w1, w1 - y1, z1 + w1, w1 - z1};
+
+    // Step 3: Initialize parametric clipping values
+    float t_min = 0.0f;  // Start of the clipped segment
+    float t_max = 1.0f;  // End of the clipped segment
+
+    // Step 4: Iterate over all 6 planes
+    for (int i = 0; i < 6; i++) {
+        if (p[i] == 0) {  // Line is parallel to this clipping plane
+            if (q[i] < 0) return false;  // Line is completely outside the plane
+        } else {
+            float t = q[i] / p[i];  // Compute the parametric intersection point
+            if (p[i] < 0) {
+                // Line enters the clipping region
+                t_min = std::max(t_min, t);
+            } else {
+                // Line leaves the clipping region
+                t_max = std::min(t_max, t);
+            }
+        }
+    }
+
+    // Step 5: Check if the segment is completely outside
+    if (t_min > t_max) return false;
+
+    // Step 6: Compute clipped coordinates
+    float newX1 = x1 + t_min * dx;
+    float newY1 = y1 + t_min * dy;
+    float newZ1 = z1 + t_min * dz;
+
+    float newX2 = x1 + t_max * dx;
+    float newY2 = y1 + t_max * dy;
+    float newZ2 = z1 + t_max * dz;
+
+    // Update the input parameters with the clipped coordinates
+    x1 = newX1;
+    y1 = newY1;
+    z1 = newZ1;
+
+    x2 = newX2;
+    y2 = newY2;
+    z2 = newZ2;
+
+    // The line was successfully clipped
+    return true;
+}
+
+
+
  void Scene::makeTransformations(std::vector<std::unordered_map<int, Vec3>> &allTransformedVertices){
 
 	
@@ -586,16 +646,78 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 			
 
 	//clipping  but just done for wireframe meshes
-
+	//shared vertices icin yine indexleri tutan bir set olusturdum
+	std::unordered_set<int> processedVertices;
 	for(size_t i = 0; i < meshes.size(); i++){
+
 		if(meshes[i]->type == WIREFRAME_MESH){
 			for(size_t j = 0; j < meshes[i]->triangles.size(); j++){ // her triangle için clipping yap.
 				//clipping fonkisyonu yazılacak
-		
+
+				// asagisini anlasilirlik icin unrolled bir sekilde her vertice'i yazdim, direkt bir for loop'ta da yazilir
+
+
+				Triangle currentTriangle = meshes[i]->triangles[k];
+				Vec4 v1 = allTransformedVerticesVec4[i][currentTriangle.vertexIds[0]]; 
+				int v1_index = currentTriangle.vertexIds[0];
+				Vec4 v2 = allTransformedVerticesVec4[i][currentTriangle.vertexIds[1]]; 
+				int v2_index = currentTriangle.vertexIds[1];
+				Vec4 v3 = allTransformedVerticesVec4[i][currentTriangle.vertexIds[2]];
+				int v3_index = currentTriangle.vertexIds[2];
+				
+                float x1 = v1.x, y1 = v1.y, z1 = v1.z, w1 = v1.w;
+                float x2 = v2.x, y2 = v2.y, z2 = v2.z, w2 = v2.w;
+                float x3 = v3.x, y3 = v3.y, z3 = v3.z, w3 = v3.w;
+				if (processedVertices.find(v1_index) == processedVertices.end() ||
+					processedVertices.find(v2_index) == processedVertices.end()) {
+                    if (liangBarsky_3D(x1, y1, z1, x2, y2, z2, w1, w2)) {
+                        x1 /= w1; y1 /= w1; z1 /= w1;
+                        x2 /= w2; y2 /= w2; z2 /= w2;
+
+                        allTransformedVerticesVec4[i][v1_index] = Vec4(x1, y1, z1, 1.0f);
+                        allTransformedVerticesVec4[i][v2_index] = Vec4(x2, y2, z2, 1.0f);
+
+                        processedVertices.insert(v1_index);
+                        processedVertices.insert(v2_index);
+                    }
+                }
+				if (processedVertices.find(v2_index) == processedVertices.end() ||
+					processedVertices.find(v3_index) == processedVertices.end()) {
+                    if (liangBarsky_3D(x2, y2, z2, x3, y3, z3, w2, w3)) {
+						x2 /= w2; y2 /= w2; z2 /= w2;
+						x3 /= w3; y3 /= w3; z3 /= w3;
+
+						allTransformedVerticesVec4[i][v2_index] = Vec4(x1, y1, z1, 1.0f);
+                        allTransformedVerticesVec4[i][v3_index] = Vec4(x2, y2, z2, 1.0f);
+
+                        processedVertices.insert(v2_index);
+                        processedVertices.insert(v3_index);
+					}
+                }
+				if (processedVertices.find(v3_index) == processedVertices.end() ||
+					processedVertices.find(v1_index) == processedVertices.end()) {
+                    if (liangBarsky_3D(x3, y3, z3, x1, y1, z1, w3, w1)) {
+						x3 /= w3; y3 /= w3; z3 /= w3;
+						x1 /= w1; y1 /= w1; z1 /= w1;
+					
+						allTransformedVerticesVec4[i][v3_index] = Vec4(x1, y1, z1, 1.0f);
+                        allTransformedVerticesVec4[i][v1_index] = Vec4(x2, y2, z2, 1.0f);
+
+                        processedVertices.insert(v3_index);
+                        processedVertices.insert(v1_index);
+					}
+                }
 			}	
 		
 		}
-		
+		else if(meshes[i]->type == SOLID_MESH ){
+			//
+			//
+		}
+		else
+			return;
+
+
 	}
 
 	//rasterize
