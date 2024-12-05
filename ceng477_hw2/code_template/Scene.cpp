@@ -707,6 +707,13 @@ void Scene::forwardRenderingPipeline(Camera *camera)
                         processedVertices.insert(v1_index);
 					}
                 }
+
+				Vec4 screen_v1 = multiplyMatrixWithVec4(viewportMatrix, Vec4(x1, y1, z1, 1.0f));
+                Vec4 screen_v2 = multiplyMatrixWithVec4(viewportMatrix, Vec4(x2, y2, z2, 1.0f));
+				Vec4 screen_v3 = multiplyMatrixWithVec4(viewportMatrix, Vec4(x3, y3, z3, 1.0f));
+				allTransformedVerticesVec4[i][currentTriangle.vertexIds[0]] = screen_v1;
+				allTransformedVerticesVec4[i][currentTriangle.vertexIds[1]] = screen_v2;
+                allTransformedVerticesVec4[i][currentTriangle.vertexIds[2]] = screen_v3;
 			}	
 		
 		}
